@@ -4,12 +4,26 @@ import cv2.aruco as A
 import numpy as np
 import json
 import sys
+import argparse
+from imutils.video import VideoStream
 from datetime import datetime
 
 from pythonosc import osc_message_builder
 from pythonosc import udp_client
 
-camera_id = int(sys.argv[1])
+# construct the argument parse and parse the arguments
+ap = argparse.ArgumentParser()
+ap.add_argument("-c", "--camera", type=int, default=0,
+  help="Which camera to use")
+ap.add_argument("-d", "--display", type=bool, default=False,
+  help="Whether or not frames should be displayed")
+ap.add_argument("-r", "--remote", type=str, default='192.168.1.20',
+  help="Host IP for OSC messages")
+ap.add_argument("-p", "--port", type=int, default=5100,
+  help="Host port for OSC messages")
+args = vars(ap.parse_args())
+
+camera_id = args['camera']
 
 with open('calibrations/video'+str(camera_id)+'.json', 'r') as f:
   data = json.loads(f.read())
@@ -32,25 +46,23 @@ detector_params.cornerRefinementMaxIterations = 500
 detector_params.cornerRefinementWinSize = 3
 detector_params.cornerRefinementMinAccuracy = 0.001
 
-print(detector_params)
-
-cap = cv2.VideoCapture(camera_id)
-client = udp_client.SimpleUDPClient('192.168.1.20', 5100)
-
-cap.set(cv2.CAP_PROP_FRAME_WIDTH,800)
-cap.set(cv2.CAP_PROP_FRAME_HEIGHT,600)
+client = udp_client.SimpleUDPClient(args['remote'], args['port'])
+resolution = (800, 600)
+vs = VideoStream(src=camera_id, usePiCamera=False, resolution=resolution).start()
+time.sleep(2.0)
 
 fps = 30.0
 last_time = datetime.now()
+frameidx = 0
 while True:
-  ret,frame = cap.read()
-
+  frame = vs.read()
   gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
   marker_corners, marker_ids, rejected = cv2.aruco.detectMarkers(gray, dictionary, parameters=detector_params)  
   rvecs, tvecs = cv2.aruco.estimatePoseSingleMarkers(marker_corners, marker_size_m, cameraMatrix, distCoeffs)
 
-  cv2.aruco.drawDetectedMarkers(gray, marker_corners, marker_ids)
-  cv2.imshow('frame',gray)
+  if args["display"]:
+    cv2.aruco.drawDetectedMarkers(gray, marker_corners, marker_ids)
+    cv2.imshow('frame',gray)
 
   if not marker_ids is None:
     data = {
@@ -59,7 +71,6 @@ while True:
       'tvecs': [x.tolist() for x in tvecs[0]]
     }
     oscmsg = json.dumps(data)
-    print(oscmsg)
     client.send_message("/cv", oscmsg)
 
   if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -70,4 +81,9 @@ while True:
   last_time = now
   curr_fps = 1.0 / delta.total_seconds()
   fps = fps + (curr_fps - fps) * 0.1
-  print("fps", fps)
+  frameidx = frameidx + 1
+  if frameidx % 30 == 0:
+    print("fps", fps)
+
+vs.stop()
+cv2.destroyAllWindows()
