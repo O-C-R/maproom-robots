@@ -97,15 +97,6 @@ void motorGoSpecific(int w0, int w1, int w2) {
 void motorGo(long x, long y) {
   float theta = atan2(y, x);
   float magnitude = sqrt((x*x)+(y*y));
-  
-  //float vx = magnitude * cos(theta);
-  //float vy = magnitude * sin(theta);
-  
-//  Serial.print("vx: ");
-//  Serial.print(vx);
-//  Serial.print(", vy: ");
-//  Serial.print(vy);
-//  Serial.println();
 
   static const float w0_angle = 0;
   static const float w1_angle = 120.0 / 180.0 * 3.14159;
@@ -115,36 +106,17 @@ void motorGo(long x, long y) {
   float w1 = magnitude * cos(w1_angle - theta);
   float w2 = magnitude * cos(w2_angle - theta);
 
-//  float minSpeed = min(min(w0, w1), w2);
-//  static const float kMinSpeed = 50.0;
-//  if (minSpeed < kMinSpeed) {
-//    float ratio = kMinSpeed / minSpeed;
-//    w0 *= ratio;
-//    w1 *= ratio;
-//    w2 *= ratio;
-//  }
-
   Serial.println("dir:");
   Serial.println(x);
   Serial.println(y);
   Serial.println(theta);
   Serial.println(magnitude);
-//  Serial.println(x*x + y*y);
-//  Serial.println(sqrt((x*x)+(y*y)));
   Serial.println("wheels:");
   Serial.println(w0);
   Serial.println(w1);
   Serial.println(w2);
   Serial.println("-----");
 
-  //Wheel 1 (θ = 0°): Vw 1 = Vb cosθ +Rw
-  //Wheel 2 (θ = 120°): Vw 2= Vb (-0.5 cosθ+0.866 sinθ)+Rw
-  //Wheel 3 (θ = 240°): Vw 3= Vb (-0.5 cosθ-0.866 sinθ)+Rw
-  
-//  float w0 = -vx;                   // v dot [-1, 0] / 25mm
-//  float w1 = 0.5*vx - sqrt3o2 * vy; // v dot [1/2, -sqrt(3)/2] / 25mm
-//  float w2 = 0.5*vx + sqrt3o2 * vy;
-  
   boolean w0_ccw = w0 < 0 ? true : false;
   boolean w1_ccw = w1 < 0 ? true : false;
   boolean w2_ccw = w2 < 0 ? true : false;
@@ -161,8 +133,4 @@ void motorGo(long x, long y) {
   motorC.pulse = w2_speed;
 
   commandMotors();
-
-//  motorA.target = w0;
-//  motorB.target = w1;
-//  motorC.target = w2;
 }

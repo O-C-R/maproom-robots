@@ -1,6 +1,3 @@
-#include <SoftwareSerial.h>
-SoftwareSerial wifiSerial(8, 9);
-
 #define ROBOT_ID_0 '0'
 #define ROBOT_ID_1 '1'
 
@@ -25,13 +22,11 @@ MotorValues motorA;
 MotorValues motorB;
 MotorValues motorC;
 
-char *buf, *wifiBuf;
-int bufLen, wifiLen;
-bool bufDone, wifiDone;
+char *buf;
+int bufLen;
+bool bufDone;
 
 #define BUF_SIZE 1024
-
-String wifiStr = "";
 
 void setup() {
   pinMode(dirA, OUTPUT);
@@ -39,25 +34,12 @@ void setup() {
   pinMode(dirC, OUTPUT); 
 
   allStop();
-//  motorA.direction = true;
-//  motorB.direction = true;
-//  motorC.direction = false;
-//  motorA.pulse = 100;
-//  motorB.pulse = 100;
-//  motorC.pulse = 4000;
-//  commandMotors();
   
   buf = (char *)malloc(BUF_SIZE * sizeof(char));
-  wifiBuf = (char *)malloc(BUF_SIZE * sizeof(char));
-
   bufLen = 0;
-  wifiLen = 0;
   bufDone = false;
-  wifiDone = false;
 
   Serial.begin(57600);
-//  wifiSerial.begin(57600);
-  
   Serial.println("Looping...");
 }
 
@@ -111,9 +93,6 @@ void handleMessage(char *buf) {
 void loop() {
   while (Serial.available()) {
     char inChar = (char)Serial.read();
-//    Serial.print("serial: ");
-//    Serial.print(inChar, HEX);
-//    Serial.println();
 
     if (bufLen >= BUF_SIZE - 1) {
       Serial.println("BUF OVERRUN");
@@ -129,14 +108,6 @@ void loop() {
   }
 
   if (bufDone) {
-    if (buf[0] == 'A' && buf[1] == 'T') {
-      wifiSerial.println("AT");
-      Serial.println("Sent AT!");
-    } else if (buf[0] == 'I' && buf[1] == 'P') {
-      wifiSerial.println("IP");
-      Serial.println("Sent IP!");
-    }
-
     Serial.print("buf: ");
     Serial.write(buf, bufLen);
     Serial.println();
@@ -145,69 +116,5 @@ void loop() {
     bufDone = false;
     bufLen = 0;
   }
-
-  while (wifiSerial.available()) {
-    char inChar = (char)wifiSerial.read();
-
-    if (wifiLen >= BUF_SIZE - 1) {
-//      Serial.println("WIFI BUF OVERRUN");
-      continue;
-    } else {
-//      Serial.print(inChar, HEX);
-    }
-
-    wifiStr += inChar;
-
-    if (!wifiDone && inChar == '\n') {
-      wifiBuf[wifiLen++] = 0;
-      wifiDone = true;
-    } else {
-      wifiBuf[wifiLen++] = inChar;
-    }
-
-    if (wifiDone) {
-      Serial.println("wifidone");
-      for (int i = 0; i < wifiLen; ++i) {
-        Serial.print(wifiBuf[i], HEX);
-      }
-      Serial.println();
-      Serial.write(wifiBuf, wifiLen);
-      Serial.println();
-      Serial.println(wifiStr);
-      Serial.println("^wifidone");
-
-      wifiStr = "";
-      wifiLen = 0;
-      wifiDone = false;
-    }
-  }
-
-
-//  Serial.write("wifil: ");
-//  Serial.write(wifiBuf, wifiLen);
-//  Serial.write(" ");
-//  Serial.println(wifiLen);
-//  Serial.println("-----");
-//  Serial.write("regl: ");
-//  Serial.write(buf, bufLen);
-//  Serial.write(" ");
-//  Serial.println(bufLen);
-//  Serial.println("-----");
-//  easeMotors();
-//  commandMotors();
-  //delay(5);
 }
-
-//void serialEvent() {
-//  while (Serial.available()) {
-//    char inChar = (char)Serial.read();
-//    if (!bufDone && (inChar == '\n' || inChar == '\r')) {
-//      buf[bufLen++] = 0;
-//      bufDone = true;
-//    } else {
-//      buf[bufLen++] = inChar;
-//    }
-//  }
-//}
-
 
