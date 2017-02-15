@@ -1,11 +1,10 @@
 import time
 import cv2
-import cv2.aruco as A
 import numpy as np
 import json
 import sys
 import argparse
-from imutils.video import VideoStream
+from threading import Thread
 from datetime import datetime
 
 from pythonosc import osc_message_builder
@@ -31,6 +30,44 @@ with open('calibrations/video'+str(camera_id)+'.json', 'r') as f:
   cameraMatrix = np.array(data['cameraMatrix'])
   distCoeffs = np.array(data['distCoeffs'])
 
+class CVVideoStream:
+  def __init__(self, src=0, resolution=(800,600)):
+    # initialize the video camera stream and read the first frame
+    # from the stream
+    self.stream = cv2.VideoCapture(src)
+    self.stream.set(cv2.CAP_PROP_FRAME_WIDTH,resolution[0])
+    self.stream.set(cv2.CAP_PROP_FRAME_HEIGHT,resolution[1])
+    (self.grabbed, self.frame) = self.stream.read()
+
+    # initialize the variable used to indicate if the thread should
+    # be stopped
+    self.stopped = False
+
+  def start(self):
+    # start the thread to read frames from the video stream
+    t = Thread(target=self.update, args=())
+    t.daemon = True
+    t.start()
+    return self
+
+  def update(self):
+    # keep looping infinitely until the thread is stopped
+    while True:
+      # if the thread indicator variable is set, stop the thread
+      if self.stopped:
+        return
+
+      # otherwise, read the next frame from the stream
+      (self.grabbed, self.frame) = self.stream.read()
+
+  def read(self):
+    # return the frame most recently read
+    return self.frame
+
+  def stop(self):
+    # indicate that the thread should be stopped
+    self.stopped = True
+
 dictionary = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_5X5_50)
 
 marker_size_in = 8
@@ -48,8 +85,8 @@ detector_params.cornerRefinementMinAccuracy = 0.001
 
 client = udp_client.SimpleUDPClient(args['remote'], args['port'])
 resolution = (800, 600)
-vs = VideoStream(src=camera_id, usePiCamera=False, resolution=resolution).start()
-time.sleep(2.0)
+vs = CVVideoStream(src=camera_id, resolution=resolution).start()
+time.sleep(1.0)
 
 fps = 30.0
 last_time = datetime.now()
