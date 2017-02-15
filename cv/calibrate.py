@@ -42,17 +42,18 @@ cap = cv2.VideoCapture(camera_id)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, args['width'])
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, args['height'])
 
+count = 25
 allCorners = []
 allIds = []
 decimator = 0
-for i in range(300):
+while True:
   ret,frame = cap.read()
   gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
   res = cv2.aruco.detectMarkers(gray,dictionary)
 
   if len(res[0])>0:
     res2 = cv2.aruco.interpolateCornersCharuco(res[0],res[1],gray,board)
-    if res2[1] is not None and res2[2] is not None and len(res2[1])>3 and decimator%3==0:
+    if res2[1] is not None and res2[2] is not None and len(res2[1])>3 and decimator%10==0:
       allCorners.append(res2[1])
       allIds.append(res2[2])
 
@@ -64,9 +65,9 @@ for i in range(300):
   if cv2.waitKey(1) & 0xFF == ord('q'):
     break
   decimator+=1
-  print(str(i) + ": " + str(len(allIds)))
+  print("found: " + str(len(allIds)) + " / " + str(count))
 
-  if (len(allIds) > 15):
+  if (len(allIds) >= count):
     break
 
 imsize = gray.shape
