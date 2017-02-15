@@ -1,8 +1,0 @@
-ofxDatGui
-ofxGeoJSON
-ofxGui
-ofxJSON
-ofxNetwork
-ofxOsc
-ofxSvg
-ofxVectorGraphics
