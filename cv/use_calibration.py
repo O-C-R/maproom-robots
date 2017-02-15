@@ -15,8 +15,8 @@ ap.add_argument("-c", "--camera", type=int, default=0,
   help="Which camera to use")
 ap.add_argument("-d", "--display", type=bool, default=False,
   help="Whether or not frames should be displayed")
-ap.add_argument("-r", "--remote", type=str, default='192.168.1.20',
-  help="Host IP for OSC messages")
+ap.add_argument("-r", "--remotes", type=str, default='192.168.1.20,192.168.1.21',
+  help="Host IPs for OSC messages, string delimited")
 ap.add_argument("-p", "--port", type=int, default=5100,
   help="Host port for OSC messages")
 ap.add_argument("-x", "--width", type=int, default=960,
@@ -26,6 +26,7 @@ ap.add_argument("-y", "--height", type=int, default=720,
 args = vars(ap.parse_args())
 
 camera_id = args['camera']
+remotes = args['remotes'].split(',')
 
 with open('calibrations/video'+str(camera_id)+'.json', 'r') as f:
   data = json.loads(f.read())
@@ -89,7 +90,7 @@ detector_params.minMarkerPerimeterRate = 0.2
 detector_params.adaptiveThreshWinSizeMin = 10
 detector_params.adaptiveThreshWinSizeMax = 10
 
-client = udp_client.SimpleUDPClient(args['remote'], args['port'])
+clients = [udp_client.SimpleUDPClient(remote, args['port']) for remote in remotes]
 resolution = (args['width'], args['height'])
 vs = CVVideoStream(src=camera_id, resolution=resolution).start()
 time.sleep(1.0)
@@ -114,7 +115,8 @@ while True:
       'tvecs': [x.tolist() for x in tvecs[0]]
     }
     oscmsg = json.dumps(data)
-    client.send_message("/cv", oscmsg)
+    for client in clients:
+      client.send_message("/cv", oscmsg)
 
   if cv2.waitKey(1) & 0xFF == ord('q'):
     break
