@@ -10,7 +10,6 @@ from datetime import datetime
 from pythonosc import osc_message_builder
 from pythonosc import udp_client
 
-# construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser()
 ap.add_argument("-c", "--camera", type=int, default=0,
   help="Which camera to use")
@@ -20,6 +19,10 @@ ap.add_argument("-r", "--remote", type=str, default='192.168.1.20',
   help="Host IP for OSC messages")
 ap.add_argument("-p", "--port", type=int, default=5100,
   help="Host port for OSC messages")
+ap.add_argument("-x", "--width", type=int, default=960,
+  help="Width of image")
+ap.add_argument("-y", "--height", type=int, default=720,
+  help="Height of image")
 args = vars(ap.parse_args())
 
 camera_id = args['camera']
@@ -82,9 +85,12 @@ detector_params.doCornerRefinement = True
 detector_params.cornerRefinementMaxIterations = 500
 detector_params.cornerRefinementWinSize = 3
 detector_params.cornerRefinementMinAccuracy = 0.001
+detector_params.minMarkerPerimeterRate = 0.2
+detector_params.adaptiveThreshWinSizeMin = 10
+detector_params.adaptiveThreshWinSizeMax = 10
 
 client = udp_client.SimpleUDPClient(args['remote'], args['port'])
-resolution = (800, 600)
+resolution = (args['width'], args['height'])
 vs = CVVideoStream(src=camera_id, resolution=resolution).start()
 time.sleep(1.0)
 
@@ -94,7 +100,7 @@ frameidx = 0
 while True:
   frame = vs.read()
   gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-  marker_corners, marker_ids, rejected = cv2.aruco.detectMarkers(gray, dictionary, parameters=detector_params)  
+  marker_corners, marker_ids, rejected = cv2.aruco.detectMarkers(gray, dictionary, parameters=detector_params)
   rvecs, tvecs = cv2.aruco.estimatePoseSingleMarkers(marker_corners, marker_size_m, cameraMatrix, distCoeffs)
 
   if args["display"]:
@@ -120,7 +126,7 @@ while True:
   fps = fps + (curr_fps - fps) * 0.1
   frameidx = frameidx + 1
   if frameidx % 30 == 0:
-    print("fps", fps)
+    print("fps", fps, "with markers", marker_ids)
 
 vs.stop()
 cv2.destroyAllWindows()

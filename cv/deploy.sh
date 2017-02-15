@@ -2,6 +2,7 @@
 
 set -ex
 
+scp ./*.py pi@192.168.1.52:~/cv/
 scp markers.service pi@192.168.1.52:~/markers.service
 ssh pi@192.168.1.52 "set -ex && \
   sudo mv markers.service /lib/systemd/system/markers.service && \
