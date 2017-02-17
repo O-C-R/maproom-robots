@@ -6,23 +6,23 @@
 #define STATE_MOVING 2
 
 #define ROTATION_ERROR 1
+#define ROTATION_SPEED 126
 
 class Robot
 {
+  bool logging;
   int id;
   int state;
   int rotation;
-
-  bool logging; // flag for logging
 
   int headingTheta;
   int headingMag;
   float headingDegree;
 
-  Motor * motorA;
-  Motor * motorB;
-  Motor * motorC;
-  Navx * navx;
+  Motor *motorA;
+  Motor *motorB;
+  Motor *motorC;
+  Navx *navx;
 
   public:
   Robot(int id, int dirA, int pwmA, int dirB, int pwmB, int dirC, int pwmC, bool logging)
@@ -39,11 +39,36 @@ class Robot
     rotation = navx->getYaw();
   }
 
-  void checkStatus() {
-    if (state = STATE_WAITING) return;
-    if (rotation < headingDegree + ROTATION_ERROR && rotation > headingDegree + ROTATION_ERROR) {
-      // robot is aligned with heading
-      state = STATE_MOVING;
+  bool turningCW = false;
+
+  void update() {
+    if (state == STATE_WAITING) return;
+    if (state == STATE_ROTATING) {
+      if (rotation < headingDegree + ROTATION_ERROR && rotation > headingDegree + ROTATION_ERROR) {
+        Serial.println("ALIGNED");
+        stop();
+      } else {
+        Serial.print("HEADING ");
+        Serial.println(headingDegree);
+        Serial.print("CURRENT ANGLE ");
+        Serial.println(rotation);
+
+        if (rotation < headingDegree) {
+          // wheel needs to turn CCW
+          if (turningCW) {
+            turningCW = false;
+            Serial.println("ROTATING CCW");
+            rotate(-ROTATION_SPEED);
+          }
+        } else {
+          // wheels need to move CW
+          if (!turningCW) {
+            turningCW = true;
+            Serial.println("ROTATING CW");
+            rotate(ROTATION_SPEED);
+          }
+        }
+      }
     }
   }
 
@@ -77,17 +102,25 @@ class Robot
     headingTheta = atan2(y, x);
     headingDegree = headingTheta * 180 / 3.14159;
     headingMag = sqrt((x*x)+(y*y));
+
+    drive();
   }
 
-  void rotate(int dir, int mag) {
+  void rotate(int speed) {
     if(logging) {
       Serial.println("rotating:");
-      Serial.println(dir > 0 ? "CW" : "CCW");
-      Serial.println("mag");
+      Serial.println(speed > 0 ? "CW" : "CCW");
+      Serial.println("speed");
     }
-    motorA->driveConstant(dir, mag);
-    motorB->driveConstant(dir, mag);
-    motorC->driveConstant(dir, mag);
+    motorA->driveConstant(speed);
+    motorB->driveConstant(speed);
+    motorC->driveConstant(speed);
+
+    commandMotors();
+  }
+
+  void rotateSpecific(int angle) {
+    state = STATE_ROTATING;
   }
 
   void drive() {
@@ -97,7 +130,6 @@ class Robot
       Serial.println(headingMag);
       Serial.println("wheels:");
     }
-
     motorA->driveVector(headingTheta, headingMag);
     motorB->driveVector(headingTheta, headingMag);
     motorC->driveVector(headingTheta, headingMag);
@@ -105,7 +137,11 @@ class Robot
     commandMotors();
   }
 
-  void goSpecific(int w0, int w1, int w2) {
-    // motorA->
+  void driveSpecific(int w0, int w1, int w2) {
+    motorA->driveConstant(w0);
+    motorB->driveConstant(w1);
+    motorC->driveConstant(w2);
+
+    commandMotors();
   }
 };

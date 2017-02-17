@@ -35,7 +35,6 @@ bool bufDone;
 #define BUF_SIZE 1024
 
 void setup() {
-
   warby = new Robot(0, dirA, pwmA, dirB, pwmB, dirC, pwmC, LOGGING);
   warby->stop();
 
@@ -65,7 +64,6 @@ void handleMessage(char *buf) {
     buf[11] = val;
     int param2 = atoi(buf + 11);
 
-    // send command to robot
     warby->setHeading(param1 - 500, param2 - 500);
 
   } else if (buf[4] == 'R' && buf[5] == 'O' && buf[6] == 'T') {
@@ -74,8 +72,7 @@ void handleMessage(char *buf) {
     int param1 = atoi(buf + 7);
     buf[11] = val;
 
-    // send command to robot
-    motorRotate(param1 - 500);
+    warby->rotateSpecific(param1 - 500);
 
   } else if (buf[4] == 'S' && buf[5] == 'E' && buf[6] == 'T') {
     byte val = buf[11];
@@ -87,19 +84,19 @@ void handleMessage(char *buf) {
     buf[15] = 0;
     int param2 = atoi(buf + 11);
     buf[15] = val;
-
     int param3 = atoi(buf + 15);
 
-    // send command to robot
-    motorGoSpecific(param1 - 500, param2 - 500, param3 - 500);
+    warby->driveSpecific(param1 - 500, param2 - 500, param3 - 500);
 
   } else {
     Serial.print("Unknown message: ");
     Serial.println(buf);
-    // send command to robot
+
     warby->stop();
   }
 }
+
+int wait = 0;
 
 void loop() {
   while (Serial.available()) {
@@ -126,6 +123,12 @@ void loop() {
 
     bufDone = false;
     bufLen = 0;
+  }
+
+  wait++;
+  if (wait > 100) {
+    warby->update();
+    wait = 0;
   }
 }
 

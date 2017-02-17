@@ -10,9 +10,9 @@ int read16(uint8_t low, uint8_t high) {
 
 class Navx
 {
+  bool logging;
   float offset;
   float actual;
-  bool logging;
   public:
 
   Navx(bool logging)

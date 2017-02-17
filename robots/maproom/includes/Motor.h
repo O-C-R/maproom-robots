@@ -1,9 +1,8 @@
 class Motor
 {
+  bool logging;
   int pulse; // pwm signal mapped 0 - 255
   bool direction; // CW = positive, CCW = negative
-
-  bool logging;
 
   int pwm; // pwm pin
   int dir; // dir pin
@@ -48,9 +47,9 @@ class Motor
     pulse = map(abs(w), 0, 600, 0, 255);
   }
 
-  void driveConstant(int dir, int mag) {
-    direction = dir < 0 ? true : false;
-    pulse = map(abs(mag), 0, 600, 0, 255);
+  // runs each motor at constant rate
+  void driveConstant(int speed) {
+    direction = speed < 0 ? true : false;
+    pulse = map(abs(speed), 0, 600, 0, 255);
   }
-
 };
