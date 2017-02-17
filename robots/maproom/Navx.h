@@ -40,7 +40,7 @@ class Navx
   }
 
   void setZero() {
-//    offset = (360.0 - actual);
+    offset = (360.0 - actual);
     if (logging) {
       Serial.print("Yaw: ");
       Serial.println(actual);

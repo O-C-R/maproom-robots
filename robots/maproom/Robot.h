@@ -15,8 +15,8 @@ class Robot
   int state;
   float rotation;
 
-  int headingTheta;
-  int headingMag;
+  float headingTheta;
+  float headingMag;
   float headingDegree;
 
   Motor *motorA;
@@ -109,6 +109,15 @@ class Robot
     headingTheta = atan2(y, x);
     headingDegree = headingTheta * 180 / 3.14159;
     headingMag = sqrt((x*x)+(y*y));
+
+//    if(logging) {
+       Serial.print("headingTheta: ");
+       Serial.println(headingTheta);
+       Serial.print("headingDegree: ");
+       Serial.println(headingDegree);
+       Serial.print("headingMag: ");
+       Serial.println(headingMag);
+//    }
 
     drive();
   }

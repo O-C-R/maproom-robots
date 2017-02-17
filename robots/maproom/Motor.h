@@ -35,12 +35,9 @@ class Motor
   }
 
   // vector sum of each wheel
-  void driveVector(int theta, int mag) {
-    static const float w_angle = angle / 180 * 3.14159;
+  void driveVector(float theta, float mag) {
+    float w_angle = angle / 180 * 3.14159;
     float w = mag * cos(w_angle - theta);
-    if (logging) {
-      Serial.println(w);
-    }
 
     // ccw = negative values, cw = positive
     direction = w < 0 ? true : false;
@@ -48,7 +45,7 @@ class Motor
   }
 
   // runs each motor at constant rate
-  void driveConstant(int speed) {
+  void driveConstant(float speed) {
     direction = speed < 0 ? true : false;
     pulse = map(abs(speed), 0, 600, 0, 255);
   }

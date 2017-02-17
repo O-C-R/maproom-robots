@@ -35,7 +35,7 @@ bool bufDone;
 #define BUF_SIZE 1024
 
 void setup() {
-  warby = new Robot(0, dirA, pwmA, dirB, pwmB, dirC, pwmC, LOGGING);
+  warby = new Robot(0, dirA, pwmA, dirB, pwmB, dirC, pwmC, true);
   warby->stop();
 
   buf = (char *)malloc(BUF_SIZE * sizeof(char));
@@ -128,7 +128,8 @@ void loop() {
   wait++;
   if (wait > 100) {
 //    warby->update();
-    warby->getYaw();
+//    warby->getYaw();
+    warby->setHeading(0, 300);
     wait = 0;
   }
 }
