@@ -13,7 +13,7 @@ class Robot
   bool logging;
   int id;
   int state;
-  int rotation;
+  float rotation;
 
   int headingTheta;
   int headingMag;
@@ -87,6 +87,13 @@ class Robot
       Serial.println("Calibrating Yaw");
     }
     navx->setZero();
+  }
+
+  void getYaw() {
+    rotation = navx->getYaw();
+    if(logging) {
+      Serial.println(rotation);
+    }
   }
 
   void stop() {

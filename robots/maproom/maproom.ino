@@ -1,4 +1,4 @@
-#include "./includes/Robot.h"
+#include "Robot.h"
 
 #define LOGGING true
 
@@ -127,7 +127,8 @@ void loop() {
 
   wait++;
   if (wait > 100) {
-    warby->update();
+//    warby->update();
+    warby->getYaw();
     wait = 0;
   }
 }
