@@ -3,7 +3,7 @@
 
 #define STATE_WAITING 0
 #define STATE_ROTATING 1
-#define STATE_MOVING 2
+#define STATE_DRIVING 2
 
 #define ROTATION_ERROR 1.0
 #define ROTATION_SPEED 126
@@ -41,8 +41,9 @@ class Robot
 
   void update() {
     if (state == STATE_WAITING) return;
+    // update rotation from navX
+    getYaw();
     if (state == STATE_ROTATING) {
-      getYaw();
       if (rotation < headingDegree + ROTATION_ERROR && rotation > headingDegree - ROTATION_ERROR) {
         Serial.println("ALIGNED");
         stop();
@@ -67,6 +68,8 @@ class Robot
             rotate(ROTATION_SPEED);
         }
       }
+    } else if (state == STATE_DRIVING) {
+      drive();
     }
   }
 
@@ -85,9 +88,6 @@ class Robot
 
   void getYaw() {
     rotation = navx->getYaw();
-    if(logging) {
-      Serial.println(rotation);
-    }
   }
 
   void stop() {
@@ -99,19 +99,11 @@ class Robot
     commandMotors();
   }
 
-  void setHeading(long x, long y) {
-    headingTheta = atan2(y, x);
-    headingDegree = headingTheta * 180 / 3.14159;
-    headingMag = sqrt((x*x)+(y*y));
-
-     Serial.print("headingTheta: ");
-     Serial.println(headingTheta);
-     Serial.print("headingDegree: ");
-     Serial.println(headingDegree);
-     Serial.print("headingMag: ");
-     Serial.println(headingMag);
-
-    drive();
+  void rotateStart(float angle) {
+    state = STATE_ROTATING;
+    headingDegree = angle;
+    Serial.print("ROTATING – headingDegree: ");
+    Serial.println(headingDegree);
   }
 
   void rotate(float speed) {
@@ -122,18 +114,20 @@ class Robot
     commandMotors();
   }
 
-  void rotateSpecific(int angle) {
-    state = STATE_ROTATING;
-    headingDegree = angle;
+  void driveStart(long x, long y) {
+    state = STATE_DRIVING;
+    headingTheta = atan2(y, x);
+    headingDegree = headingTheta * 180 / 3.14159;
+    headingMag = sqrt((x*x)+(y*y));
+    Serial.print("DRIVING – headingTheta: ");
+    Serial.println(headingTheta);
+    Serial.print("headingDegree: ");
+    Serial.println(headingDegree);
+    Serial.print("headingMag: ");
+    Serial.println(headingMag);
   }
 
   void drive() {
-    if(logging) {
-      Serial.println("dir:");
-      Serial.println(headingTheta);
-      Serial.println(headingMag);
-      Serial.println("wheels:");
-    }
     motorA->driveVector(headingTheta, headingMag);
     motorB->driveVector(headingTheta, headingMag);
     motorC->driveVector(headingTheta, headingMag);

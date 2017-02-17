@@ -64,7 +64,7 @@ void handleMessage(char *buf) {
     buf[11] = val;
     int param2 = atoi(buf + 11);
 
-    warby->setHeading(param1 - 500, param2 - 500);
+    warby->driveStart(param1 - 500, param2 - 500);
 
   } else if (buf[4] == 'R' && buf[5] == 'O' && buf[6] == 'T') {
     byte val = buf[11];
@@ -74,7 +74,7 @@ void handleMessage(char *buf) {
 
     Serial.print("param1: ");
     Serial.print(param1);
-    warby->rotateSpecific(param1 - 500);
+    warby->rotateStart(param1 - 500);
 
   } else if (buf[4] == 'S' && buf[5] == 'E' && buf[6] == 'T') {
     byte val = buf[11];
@@ -130,7 +130,7 @@ void loop() {
   wait++;
   if (wait > 5000) {
 //    warby->getYaw();
-//    warby->setHeading(0, 300);  
+//    warby->setHeading(0, 300);
 //    warby->rotate(-100.0);
 //    warby->rotateSpecific(45.00);
     warby->update();
