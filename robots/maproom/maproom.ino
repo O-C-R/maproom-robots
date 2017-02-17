@@ -1,3 +1,7 @@
+#include "Robot.h"
+
+#define LOGGING true
+
 #define ROBOT_ID_0 '0'
 #define ROBOT_ID_1 '1'
 
@@ -22,6 +26,8 @@ MotorValues motorA;
 MotorValues motorB;
 MotorValues motorC;
 
+Robot * warby;
+
 char *buf;
 int bufLen;
 bool bufDone;
@@ -29,12 +35,9 @@ bool bufDone;
 #define BUF_SIZE 1024
 
 void setup() {
-  pinMode(dirA, OUTPUT);
-  pinMode(dirB, OUTPUT);
-  pinMode(dirC, OUTPUT); 
+  warby = new Robot(0, dirA, pwmA, dirB, pwmB, dirC, pwmC, true);
+  warby->stop();
 
-  allStop();
-  
   buf = (char *)malloc(BUF_SIZE * sizeof(char));
   bufLen = 0;
   bufDone = false;
@@ -53,22 +56,26 @@ void setup() {
 void handleMessage(char *buf) {
   if (buf[0] != 'M' && buf[1] != 'R') return;
   if (buf[2] != ROBOT_ID_0 && buf[3] != ROBOT_ID_1) return;
-  
+
   if (buf[4] == 'M' && buf[5] == 'O' && buf[6] == 'V') {
     byte val = buf[11];
     buf[11] = 0;
     int param1 = atoi(buf + 7);
     buf[11] = val;
     int param2 = atoi(buf + 11);
-    
-    motorGo(param1 - 500, param2 - 500);
+
+    warby->setHeading(param1 - 500, param2 - 500);
+
   } else if (buf[4] == 'R' && buf[5] == 'O' && buf[6] == 'T') {
     byte val = buf[11];
     buf[11] = 0;
     int param1 = atoi(buf + 7);
     buf[11] = val;
-    
-    motorRotate(param1 - 500);
+
+    Serial.print("param1: ");
+    Serial.print(param1);
+    warby->rotateSpecific(param1 - 500);
+
   } else if (buf[4] == 'S' && buf[5] == 'E' && buf[6] == 'T') {
     byte val = buf[11];
     buf[11] = 0;
@@ -79,16 +86,19 @@ void handleMessage(char *buf) {
     buf[15] = 0;
     int param2 = atoi(buf + 11);
     buf[15] = val;
-
     int param3 = atoi(buf + 15);
-    
-    motorGoSpecific(param1 - 500, param2 - 500, param3 - 500);
+
+    warby->driveSpecific(param1 - 500, param2 - 500, param3 - 500);
+
   } else {
     Serial.print("Unknown message: ");
     Serial.println(buf);
-    allStop();
+
+    warby->stop();
   }
 }
+
+int wait = 0;
 
 void loop() {
   while (Serial.available()) {
@@ -115,6 +125,17 @@ void loop() {
 
     bufDone = false;
     bufLen = 0;
+  }
+
+  wait++;
+  if (wait > 5000) {
+//    warby->update();
+    warby->getYaw();
+//    warby->setHeading(0, 300);  
+//    warby->rotate(-100.0);
+//    warby->rotateSpecific(45.00);
+    warby->update();
+    wait = 0;
   }
 }
 
