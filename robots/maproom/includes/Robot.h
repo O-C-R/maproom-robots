@@ -4,10 +4,12 @@
 class Robot
 {
   int id;
-  int orientation;
-  bool status;
 
-  // todo: figure out notation for motor orientation
+  int headingTheta;
+  int headingMag;
+
+  bool status; // flag for logging
+
   Motor * motorA;
   Motor * motorB;
   Motor * motorC;
@@ -23,7 +25,7 @@ class Robot
     motorC = new Motor(dirC, pwmC, 240.0);
   }
 
-  void commandMotors(bool status) {
+  void commandMotors() {
     if (status) {
       Serial.println("output:");
       Serial.println("-----");
@@ -34,21 +36,30 @@ class Robot
     motorC->commandMotor(status);
   }
 
-  void allStop() {
+  void stop() {
     motorA->stop();
     motorB->stop();
     motorC->stop();
   }
 
-  // void easeMotors() {
-  //   motorA->ease();
-  //   motorB->ease();
-  //   motorC->ease();
-  // }
+  void setHeading(long x, long y) {
+    headingTheta = atan2(y, x);
+    headingMag = sqrt((x*x)+(y*y));
 
-  void motorsGo(long x, long y, bool status) {
-    motorA->go(x, y, status);
-    motorB->go(x, y, status);
-    motorC->go(x, y, status);
+    if(status) {
+      Serial.println("dir:");
+      Serial.println(x);
+      Serial.println(y);
+      Serial.println(headingTheta);
+      Serial.println(headingMag);
+      Serial.println("wheels:")
+    }
+    motorA->go(x, y, headingTheta, headingMag, status);
+    motorB->go(x, y, headingTheta, headingMag, status);
+    motorC->go(x, y, headingTheta, headingMag, status);
+  }
+
+  void goSpecific(int w0, int w1, int w2) {
+    motorA->
   }
 };

@@ -35,13 +35,9 @@ bool bufDone;
 #define BUF_SIZE 1024
 
 void setup() {
-  pinMode(dirA, OUTPUT);
-  pinMode(dirB, OUTPUT);
-  pinMode(dirC, OUTPUT);
 
   warby = new Robot(0, dirA, pwmA, dirB, pwmB, dirC, pwmC, LOGGING);
-
-  allStop();
+  warby->stop();
 
   buf = (char *)malloc(BUF_SIZE * sizeof(char));
   bufLen = 0;
@@ -69,14 +65,18 @@ void handleMessage(char *buf) {
     buf[11] = val;
     int param2 = atoi(buf + 11);
 
-    motorGo(param1 - 500, param2 - 500);
+    // send command to robot
+    warby->setHeading(param1 - 500, param2 - 500);
+
   } else if (buf[4] == 'R' && buf[5] == 'O' && buf[6] == 'T') {
     byte val = buf[11];
     buf[11] = 0;
     int param1 = atoi(buf + 7);
     buf[11] = val;
 
+    // send command to robot
     motorRotate(param1 - 500);
+
   } else if (buf[4] == 'S' && buf[5] == 'E' && buf[6] == 'T') {
     byte val = buf[11];
     buf[11] = 0;
@@ -90,11 +90,14 @@ void handleMessage(char *buf) {
 
     int param3 = atoi(buf + 15);
 
+    // send command to robot
     motorGoSpecific(param1 - 500, param2 - 500, param3 - 500);
+
   } else {
     Serial.print("Unknown message: ");
     Serial.println(buf);
-    allStop();
+    // send command to robot
+    warby->stop();
   }
 }
 

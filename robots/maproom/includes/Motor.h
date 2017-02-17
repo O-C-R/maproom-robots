@@ -1,25 +1,21 @@
 class Motor
 {
-  int pulse;
-  bool direction;
+  int pulse; // pwm signal mapped 0 - 255
+  bool direction; // CW = positive, CCW = negative
 
-  float current;
-  float target;
+  int pwm; // pwm pin
+  int dir; // dir pin
 
-  int pwm;
-  int dir;
+  float angle; // orientation of the wheel
 
-  float angle;
   public:
   Motor(int dir_pin, int pwm_pin, float wheel_angle)
   {
-    target = 0;
-    current = 0;
     pulse = 0;
-
     pwm = pwm_pin;
     dir = dir_pin;
     angle = wheel_angle;
+    pinMode(dir, OUTPUT);
   }
 
   void commandMotor(bool status) {
@@ -39,23 +35,17 @@ class Motor
     analogWrite(pwm, 0);
   }
 
-  void go(int y, int x, bool status) {
-    float theta = atan2(y, x);
-    float magnitude = sqrt((x*x)+(y*y));
+  void go(int y, int x, theta, mag, bool status) {
 
-    static const float w_angle = angle;
+    static const float w_angle = angle / 180 * 3.14159;
+    float w = mag * cos(w_angle - theta);
+    if (status) {
+      Serial.println(w);
+    }
 
-    float w = magnitude * cos(w_angle - theta);
-
-    // todo: add logging
-
-    boolean w_ccw = w < 0 ? true : false;
-
-    int w_speed = map(abs(w), 0, 600, 0, 255);
-
-    direction = w_ccw;
-
-    pulse = w_speed;
+    // ccw = negative values, cw = positive
+    direction = w < 0 ? true : false;
+    pulse = map(abs(w), 0, 600, 0, 255);
 
     commandMotor(status);
   }
