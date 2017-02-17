@@ -10,17 +10,18 @@ int read16(uint8_t low, uint8_t high) {
 
 class Navx
 {
-  int offset;
-  int actual;
+  float offset;
+  float actual;
+  bool logging;
   public:
 
-  Navx()
+  Navx(bool logging)
   {
     Wire.begin();
-    offset = 0;
+    offset = 0.0;
   }
 
-  int get_yaw() {
+  int getYaw() {
     int i = 0;
     Wire.beginTransmission(0x32); // NavX is at I2C bus 0x32
     Wire.write(0);
@@ -34,11 +35,18 @@ class Navx
     }
     Wire.endTransmission();
     // values are originally -180 to 180, we want all positive numbers to work with
-    actual = 36000 + read16(data[NAVX_REG_YAW_L], data[NAVX_REG_YAW_H]);
+    // actual = 36000 + read16(data[NAVX_REG_YAW_L], data[NAVX_REG_YAW_H]);
+    actual = float((36000 + read16(data[NAVX_REG_YAW_L], data[NAVX_REG_YAW_H]))%36000)/100.0;
     return (actual - offset);
   }
 
-  void set_zero() {
-    offset = (36000 - actual);
+  void setZero() {
+    offset = (360.0 - actual);
+    if (logging) {
+      Serial.print("Yaw: ");
+      Serial.println(actual);
+      Serial.print("Offset: ");
+      Serial.println(offset);
+    }
   }
 };
