@@ -46,7 +46,7 @@ class Motor
 
   // runs each motor at constant rate
   void driveConstant(float speed) {
-    direction = speed < 0 ? true : false;
+    direction = speed > 0 ? true : false;
     pulse = map(abs(speed), 0, 600, 0, 255);
   }
 };
