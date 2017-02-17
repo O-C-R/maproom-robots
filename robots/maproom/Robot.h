@@ -39,8 +39,6 @@ class Robot
     rotation = navx->getYaw();
   }
 
-//  bool turningCW = true;
-
   void update() {
     if (state == STATE_WAITING) return;
     if (state == STATE_ROTATING) {
@@ -53,7 +51,7 @@ class Robot
         Serial.print(headingDegree + ROTATION_ERROR);
         Serial.print(" lower: ");
         Serial.print(headingDegree - ROTATION_ERROR);
-//        Serial.print(
+
         Serial.print(" HEADING: ");
         Serial.print(headingDegree);
         Serial.print(" CURRENT: ");
@@ -61,28 +59,18 @@ class Robot
 
         if (rotation > headingDegree) {
           // wheel needs to turn CCW
-//          if (turningCW) {
-//            turningCW = false;
             Serial.println(" ROTATING CCW");
             rotate(-ROTATION_SPEED);
-//          }
         } else {
           // wheels need to move CW
-//          if (!turningCW) {
-//            turningCW = true;
             Serial.println(" ROTATING CW");
             rotate(ROTATION_SPEED);
-//          }
         }
       }
     }
   }
 
   void commandMotors() {
-//    if (logging) {
-//      Serial.println("output:");
-//      Serial.println("-----");
-//    }
     motorA->commandMotor();
     motorB->commandMotor();
     motorC->commandMotor();
@@ -116,24 +104,17 @@ class Robot
     headingDegree = headingTheta * 180 / 3.14159;
     headingMag = sqrt((x*x)+(y*y));
 
-//    if(logging) {
-       Serial.print("headingTheta: ");
-       Serial.println(headingTheta);
-       Serial.print("headingDegree: ");
-       Serial.println(headingDegree);
-       Serial.print("headingMag: ");
-       Serial.println(headingMag);
-//    }
+     Serial.print("headingTheta: ");
+     Serial.println(headingTheta);
+     Serial.print("headingDegree: ");
+     Serial.println(headingDegree);
+     Serial.print("headingMag: ");
+     Serial.println(headingMag);
 
     drive();
   }
 
   void rotate(float speed) {
-//    if(logging) {
-//      Serial.println("rotating:");
-//      Serial.println(speed > 0 ? "CW" : "CCW");
-//      Serial.println("speed");
-//    }
     motorA->driveConstant(speed);
     motorB->driveConstant(speed);
     motorC->driveConstant(speed);

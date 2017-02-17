@@ -1,6 +1,6 @@
 #include "Robot.h"
 
-#define LOGGING true
+#define LOGGING 1
 
 #define ROBOT_ID_0 '0'
 #define ROBOT_ID_1 '1'
@@ -129,8 +129,7 @@ void loop() {
 
   wait++;
   if (wait > 5000) {
-//    warby->update();
-    warby->getYaw();
+//    warby->getYaw();
 //    warby->setHeading(0, 300);  
 //    warby->rotate(-100.0);
 //    warby->rotateSpecific(45.00);

@@ -21,11 +21,6 @@ class Motor
   }
 
   void commandMotor() {
-    if (logging) {
-      Serial.print(direction);
-      Serial.print(" ");
-      Serial.println(pulse);
-    }
     digitalWrite(dir, direction);
     analogWrite(pwm, pulse);
   }
