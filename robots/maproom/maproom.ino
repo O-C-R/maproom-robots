@@ -1,3 +1,7 @@
+#include "./includes/Robot.h"
+
+#define LOGGING true
+
 #define ROBOT_ID_0 '0'
 #define ROBOT_ID_1 '1'
 
@@ -22,6 +26,8 @@ MotorValues motorA;
 MotorValues motorB;
 MotorValues motorC;
 
+Robot * warby;
+
 char *buf;
 int bufLen;
 bool bufDone;
@@ -31,10 +37,12 @@ bool bufDone;
 void setup() {
   pinMode(dirA, OUTPUT);
   pinMode(dirB, OUTPUT);
-  pinMode(dirC, OUTPUT); 
+  pinMode(dirC, OUTPUT);
+
+  warby = new Robot(0, dirA, pwmA, dirB, pwmB, dirC, pwmC, LOGGING);
 
   allStop();
-  
+
   buf = (char *)malloc(BUF_SIZE * sizeof(char));
   bufLen = 0;
   bufDone = false;
@@ -53,21 +61,21 @@ void setup() {
 void handleMessage(char *buf) {
   if (buf[0] != 'M' && buf[1] != 'R') return;
   if (buf[2] != ROBOT_ID_0 && buf[3] != ROBOT_ID_1) return;
-  
+
   if (buf[4] == 'M' && buf[5] == 'O' && buf[6] == 'V') {
     byte val = buf[11];
     buf[11] = 0;
     int param1 = atoi(buf + 7);
     buf[11] = val;
     int param2 = atoi(buf + 11);
-    
+
     motorGo(param1 - 500, param2 - 500);
   } else if (buf[4] == 'R' && buf[5] == 'O' && buf[6] == 'T') {
     byte val = buf[11];
     buf[11] = 0;
     int param1 = atoi(buf + 7);
     buf[11] = val;
-    
+
     motorRotate(param1 - 500);
   } else if (buf[4] == 'S' && buf[5] == 'E' && buf[6] == 'T') {
     byte val = buf[11];
@@ -81,7 +89,7 @@ void handleMessage(char *buf) {
     buf[15] = val;
 
     int param3 = atoi(buf + 15);
-    
+
     motorGoSpecific(param1 - 500, param2 - 500, param3 - 500);
   } else {
     Serial.print("Unknown message: ");

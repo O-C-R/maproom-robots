@@ -1,16 +1,16 @@
 void allStop() {
   motorA.target = 0;
   motorA.current = 0;
-  motorA.pulse = 0; 
-  
+  motorA.pulse = 0;
+
   motorB.target = 0;
   motorB.current = 0;
   motorB.pulse = 0;
-  
+
   motorC.target = 0;
   motorC.current = 0;
   motorC.pulse = 0;
-  
+
   analogWrite(pwmA, 0);
   analogWrite(pwmB, 0);
   analogWrite(pwmC, 0);
@@ -49,12 +49,12 @@ void commandMotors() {
   Serial.print(" ");
   Serial.println(motorC.pulse);
   Serial.println("-----");
-  
+
   digitalWrite(dirA, motorA.direction);
   digitalWrite(dirB, motorB.direction);
   digitalWrite(dirC, motorC.direction);
   analogWrite(pwmA, motorA.pulse);
-  analogWrite(pwmB, motorB.pulse);  
+  analogWrite(pwmB, motorB.pulse);
   analogWrite(pwmC, motorC.pulse);
 }
 
@@ -82,11 +82,11 @@ void motorGoSpecific(int w0, int w1, int w2) {
   int w0_speed = abs(w0);
   int w1_speed = abs(w1);
   int w2_speed = abs(w2);
-  
+
   motorA.direction = w0_ccw;
   motorB.direction = w1_ccw;
   motorC.direction = w2_ccw;
-  
+
   motorA.pulse = w0_speed;
   motorB.pulse = w1_speed;
   motorC.pulse = w2_speed;
@@ -123,11 +123,11 @@ void motorGo(long x, long y) {
   int w0_speed = map(abs(w0), 0, 600, 0, 255);
   int w1_speed = map(abs(w1), 0, 600, 0, 255);
   int w2_speed = map(abs(w2), 0, 600, 0, 255);
-  
+
   motorA.direction = w0_ccw;
   motorB.direction = w1_ccw;
   motorC.direction = w2_ccw;
-  
+
   motorA.pulse = w0_speed;
   motorB.pulse = w1_speed;
   motorC.pulse = w2_speed;
