@@ -1,6 +1,8 @@
 # St Louis Map Room Robots
 
-#### Message Protocol
+### Message Protocol
+
+#### Coordinator -> Robot
 
 All messages prefixed with `MR` (map room)
 
@@ -19,4 +21,7 @@ draw(heading_angle, magnitude)
 stop()
 `MRSTP`
 
+#### Robot -> Coordinator
 
+heartbeat()
+`RB{ID}HB` (e.g. RB01HB)
