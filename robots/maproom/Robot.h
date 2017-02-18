@@ -3,7 +3,12 @@
 
 #define STATE_WAITING 0
 #define STATE_ROTATING 1
-#define STATE_DRIVING 2
+#define STATE_POSITIONING 2
+#define STATE_DRAWING 3
+#define STATE_MOVING_MARKER 4
+
+#define MARKER_DOWN 1
+#define MARKER_UP 0
 
 #define ROTATION_ERROR 1.0
 #define ROTATION_SPEED 126
@@ -13,7 +18,6 @@ class Robot
   bool logging;
   int id;
   int state;
-  float rotation;
 
   float headingMag;
   float headingDegree;
@@ -22,6 +26,7 @@ class Robot
   Motor *motorB;
   Motor *motorC;
   Navx *navx;
+  Marker *marker;
 
   public:
   Robot(int id, int dirA, int pwmA, int dirB, int pwmB, int dirC, int pwmC, bool logging)
@@ -35,14 +40,20 @@ class Robot
 
     navx = new Navx(logging);
     navx->calibrate(0);
-    rotation = navx->getYaw();
+
+    marker *marker(0);
   }
 
   void update() {
-    if (state == STATE_WAITING) return;
-    // update rotation from navX
-    getYaw();
+    if (state == STATE_WAITING) {
+      if (marker->getPosition() != MARKER_UP) {
+        marker->setPosition(MARKER_UP);
+      }
+      return;
+    }
+
     if (state == STATE_ROTATING) {
+      float rotation = getYaw();
       if (rotation < headingDegree + ROTATION_ERROR && rotation > headingDegree - ROTATION_ERROR) {
         Serial.println("ALIGNED");
         stop();
@@ -67,7 +78,17 @@ class Robot
             rotate(ROTATION_SPEED);
         }
       }
-    } else if (state == STATE_DRIVING) {
+    } else if (state == STATE_POSITIONING) {
+      if (marker->getPosition() != MARKER_UP ) {
+        marker->setPosition(MARKER_UP);
+        return;
+      }
+      drive();
+    } else if (state == STATE_DRAWING) {
+      if (marker->getPosition() != MARKER_DOWN ) {
+        marker->setPosition(MARKER_DOWN);
+        return;
+      }
       drive();
     }
   }
@@ -98,7 +119,7 @@ class Robot
     commandMotors();
   }
 
-  void rotateStart(float angle, float recorded) {
+  void rotateManager(float angle, float recorded) {
     state = STATE_ROTATING;
     headingDegree = angle;
     Serial.print("ROTATING – headingDegree: ");
@@ -113,11 +134,12 @@ class Robot
     commandMotors();
   }
 
-  void driveStart(float dir, long mag) {
-    state = STATE_DRIVING;
+  void driveManager(float dir, long mag) {
+    state = STATE_POSITIONING;
+
     headingDegree = dir;
     headingMag = mag;
-    Serial.print("DRIVING – headingDegree: ");
+    Serial.print("POSITIONING – headingDegree: ");
     Serial.println(headingDegree);
     Serial.print("headingMag: ");
     Serial.println(headingMag);
@@ -138,4 +160,16 @@ class Robot
 
     commandMotors();
   }
+
+  void drawManager(float dir, long mag) {
+    state = STATE_POSITIONING;
+
+    headingDegree = dir;
+    headingMag = mag;
+    Serial.print("DRAWING – headingDegree: ");
+    Serial.println(headingDegree);
+    Serial.print("headingMag: ");
+    Serial.println(headingMag);
+  }
+
 };

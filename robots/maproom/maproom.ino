@@ -55,7 +55,7 @@ void handleMessage(char *buf) {
     buf[11] = val;
     int mag = atoi(buf + 11);
 
-    warby->driveStart(dir, mag);
+    warby->driveManager(dir, mag);
   } else if (buf[2] == 'R' && buf[3] == 'O' && buf[4] == 'T') {
     // ROTATE COMMAND
 
@@ -70,7 +70,7 @@ void handleMessage(char *buf) {
     Serial.print("measuredAngle: ");
     Serial.print(measuredAngle);
 
-    warby->rotateStart(desiredAngle, measuredAngle);
+    warby->rotateManager(desiredAngle, measuredAngle);
 
   } else if (buf[2] == 'X' && buf[3] == 'D' && buf[4] == 'R') {
     // DEBUG
