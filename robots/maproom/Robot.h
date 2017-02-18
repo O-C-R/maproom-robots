@@ -1,5 +1,6 @@
 #include "Motor.h"
 #include "Navx.h"
+#include "Marker.h" 
 
 #define STATE_WAITING 0
 #define STATE_ROTATING 1
@@ -41,7 +42,7 @@ class Robot
     navx = new Navx(logging);
     navx->calibrate(0);
 
-    marker *marker(0);
+    marker = new Marker(0);
   }
 
   void update() {
@@ -53,7 +54,7 @@ class Robot
     }
 
     if (state == STATE_ROTATING) {
-      float rotation = getYaw();
+      float rotation = navx->getYaw();
       if (rotation < headingDegree + ROTATION_ERROR && rotation > headingDegree - ROTATION_ERROR) {
         Serial.println("ALIGNED");
         stop();
@@ -104,10 +105,6 @@ class Robot
       Serial.println("Calibrating Yaw");
     }
     navx->calibrate(newAngle);
-  }
-
-  void getYaw() {
-    rotation = navx->getYaw();
   }
 
   void stop() {
