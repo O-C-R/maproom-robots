@@ -31,7 +31,7 @@ board = cv2.aruco.CharucoBoard_create(n_sq_horiz, n_sq_vert, sq_size_m,marker_si
 img = board.draw((img_ppi*n_sq_horiz,img_ppi*n_sq_vert))
 
 #Dump the calibration board to a file
-cv2.imwrite('charuco.png',img)
+cv2.imwrite('markers/charuco-calibration.png',img)
 print('wrote image with dims', (img_ppi*n_sq_horiz,img_ppi*n_sq_vert), 'maps to size', (sq_size_m * n_sq_horiz, sq_size_m * n_sq_vert), 'meters')
 print('or', (sq_size_m * n_sq_horiz / in_to_m, sq_size_m * n_sq_vert / in_to_m), 'inches')
 
@@ -92,7 +92,9 @@ try:
     'distCoeffs': distCoeffs.tolist(),
     'err': err
   })
-  with open('calibrations/video'+str(camera_id)+'.json', 'w') as f:
+  filename = 'calibrations/video'+str(camera_id)+'.json'
+  print('Saving calibration to file:', filename)
+  with open(filename, 'w') as f:
     f.write(out)
 except Exception as err:
   print(err)

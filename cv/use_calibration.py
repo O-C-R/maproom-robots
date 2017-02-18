@@ -28,7 +28,9 @@ args = vars(ap.parse_args())
 camera_id = args['camera']
 remotes = args['remotes'].split(',')
 
-with open('calibrations/video'+str(camera_id)+'.json', 'r') as f:
+filename = 'calibrations/video'+str(camera_id)+'.json'
+print('Loading calibration from file:', filename)
+with open(filename, 'r') as f:
   data = json.loads(f.read())
 
   cameraMatrix = np.array(data['cameraMatrix'])
@@ -81,12 +83,15 @@ ppi = 72
 robot01 = cv2.aruco.drawMarker(dictionary, 23, marker_size_in * ppi)
 cv2.imwrite('markers/robot01.png', robot01)
 
+robot02 = cv2.aruco.drawMarker(dictionary, 24, int(marker_size_in * ppi / 2.0))
+cv2.imwrite('markers/robot02.png', robot02)
+
 detector_params = cv2.aruco.DetectorParameters_create()
 detector_params.doCornerRefinement = True
 detector_params.cornerRefinementMaxIterations = 500
 detector_params.cornerRefinementWinSize = 3
 detector_params.cornerRefinementMinAccuracy = 0.001
-detector_params.minMarkerPerimeterRate = 0.2
+detector_params.minMarkerPerimeterRate = 0.1
 detector_params.adaptiveThreshWinSizeMin = 10
 detector_params.adaptiveThreshWinSizeMax = 10
 
@@ -109,14 +114,17 @@ while True:
     cv2.imshow('frame',gray)
 
   if not marker_ids is None:
+    marker_id_list = [int(x[0]) for x in marker_ids]
     data = {
-      'ids': marker_ids[0].tolist(),
-      'rvecs': [x.tolist() for x in rvecs[0]],
-      'tvecs': [x.tolist() for x in tvecs[0]]
+      'ids': marker_id_list,
+      'rvecs': [x[0].tolist() for x in rvecs],
+      'tvecs': [x[0].tolist() for x in tvecs]
     }
     oscmsg = json.dumps(data)
     for client in clients:
       client.send_message("/cv", oscmsg)
+  else:
+    marker_id_list = None
 
   if cv2.waitKey(1) & 0xFF == ord('q'):
     break
@@ -128,7 +136,7 @@ while True:
   fps = fps + (curr_fps - fps) * 0.1
   frameidx = frameidx + 1
   if frameidx % 30 == 0:
-    print("fps", fps, "with markers", marker_ids)
+    print("fps", fps, "with markers", marker_id_list)
 
 vs.stop()
 cv2.destroyAllWindows()
