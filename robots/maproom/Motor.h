@@ -30,9 +30,8 @@ class Motor
   }
 
   // vector sum of each wheel
-  void driveVector(float theta, float mag) {
-    float w_angle = angle / 180 * 3.14159;
-    float w = mag * cos(w_angle - theta);
+  void driveVector(float dir, float mag) {
+    float w = mag * cos(angle - dir);
 
     // ccw = negative values, cw = positive
     direction = w < 0 ? true : false;

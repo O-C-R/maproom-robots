@@ -15,7 +15,6 @@ class Robot
   int state;
   float rotation;
 
-  float headingTheta;
   float headingMag;
   float headingDegree;
 
@@ -35,7 +34,7 @@ class Robot
     motorC = new Motor(dirC, pwmC, 240.0, logging);
 
     navx = new Navx(logging);
-    navx->setZero();
+    navx->calibrate(0);
     rotation = navx->getYaw();
   }
 
@@ -79,11 +78,11 @@ class Robot
     motorC->commandMotor();
   }
 
-  void calibrateYaw() {
+  void calibrate(float newAngle) {
     if(logging) {
       Serial.println("Calibrating Yaw");
     }
-    navx->setZero();
+    navx->calibrate(newAngle);
   }
 
   void getYaw() {
@@ -99,7 +98,7 @@ class Robot
     commandMotors();
   }
 
-  void rotateStart(float angle) {
+  void rotateStart(float angle, float recorded) {
     state = STATE_ROTATING;
     headingDegree = angle;
     Serial.print("ROTATING – headingDegree: ");
@@ -114,23 +113,20 @@ class Robot
     commandMotors();
   }
 
-  void driveStart(long x, long y) {
+  void driveStart(float dir, long mag) {
     state = STATE_DRIVING;
-    headingTheta = atan2(y, x);
-    headingDegree = headingTheta * 180 / 3.14159;
-    headingMag = sqrt((x*x)+(y*y));
-    Serial.print("DRIVING – headingTheta: ");
-    Serial.println(headingTheta);
-    Serial.print("headingDegree: ");
+    headingDegree = dir;
+    headingMag = mag;
+    Serial.print("DRIVING – headingDegree: ");
     Serial.println(headingDegree);
     Serial.print("headingMag: ");
     Serial.println(headingMag);
   }
 
   void drive() {
-    motorA->driveVector(headingTheta, headingMag);
-    motorB->driveVector(headingTheta, headingMag);
-    motorC->driveVector(headingTheta, headingMag);
+    motorA->driveVector(headingDegree, headingMag);
+    motorB->driveVector(headingDegree, headingMag);
+    motorC->driveVector(headingDegree, headingMag);
 
     commandMotors();
   }

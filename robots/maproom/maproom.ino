@@ -2,9 +2,6 @@
 
 #define LOGGING 1
 
-#define ROBOT_ID_0 '0'
-#define ROBOT_ID_1 '1'
-
 #define pwmA 6
 #define dirA 7
 
@@ -46,49 +43,54 @@ void setup() {
   Serial.println("Looping...");
 }
 
-// MR01CMDPAR1PAR2
-// 012345678901234
-
-// MR01MOV05120512
-// MR01MOV06120612
-// MR01MOV04120412
-
 void handleMessage(char *buf) {
   if (buf[0] != 'M' && buf[1] != 'R') return;
-  if (buf[2] != ROBOT_ID_0 && buf[3] != ROBOT_ID_1) return;
 
-  if (buf[4] == 'M' && buf[5] == 'O' && buf[6] == 'V') {
+  if (buf[2] == 'M' && buf[3] == 'O' && buf[4] == 'V') {
+    // MOVE COMMAND
+
     byte val = buf[11];
     buf[11] = 0;
-    int param1 = atoi(buf + 7);
+    int dir = atoi(buf + 5);
     buf[11] = val;
-    int param2 = atoi(buf + 11);
+    int mag = atoi(buf + 11);
 
-    warby->driveStart(param1 - 500, param2 - 500);
+    warby->driveStart(dir, mag);
+  } else if (buf[2] == 'R' && buf[3] == 'O' && buf[4] == 'T') {
+    // ROTATE COMMAND
 
-  } else if (buf[4] == 'R' && buf[5] == 'O' && buf[6] == 'T') {
     byte val = buf[11];
     buf[11] = 0;
-    int param1 = atoi(buf + 7);
+    int desiredAngle = atoi(buf + 5);
     buf[11] = val;
+    int measuredAngle = atoi(buf + 11);
+    Serial.println("ROTATE MESSAGE");
+    Serial.print("desiredAngle: ");
+    Serial.print(desiredAngle);
+    Serial.print("measuredAngle: ");
+    Serial.print(measuredAngle);
 
-    Serial.print("param1: ");
-    Serial.print(param1);
-    warby->rotateStart(param1 - 500);
+    warby->rotateStart(desiredAngle, measuredAngle);
 
-  } else if (buf[4] == 'S' && buf[5] == 'E' && buf[6] == 'T') {
+  } else if (buf[2] == 'X' && buf[3] == 'D' && buf[4] == 'R') {
+    // DEBUG
+
     byte val = buf[11];
     buf[11] = 0;
-    int param1 = atoi(buf + 7);
+    int w0_mag = atoi(buf + 5);
     buf[11] = val;
+    val = buf[17];
+    buf[17] = 0;
+    int w1_mag = atoi(buf + 11);
+    buf[17] = val;
+    int w2_mag = atoi(buf + 17);
 
-    val = buf[15];
-    buf[15] = 0;
-    int param2 = atoi(buf + 11);
-    buf[15] = val;
-    int param3 = atoi(buf + 15);
+    warby->driveSpecific(w0_mag, w1_mag, w2_mag);
+  } else if (buf[2] == 'C' && buf[3] == 'A' && buf[4] == 'L') {
+    // CALIBRATE
 
-    warby->driveSpecific(param1 - 500, param2 - 500, param3 - 500);
+    int newRotation = atoi(buf + 5);
+    warby->calibrate(newRotation);
 
   } else {
     Serial.print("Unknown message: ");

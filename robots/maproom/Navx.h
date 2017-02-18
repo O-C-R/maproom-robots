@@ -36,12 +36,12 @@ class Navx
     Wire.endTransmission();
 
     actual = float((36000 + read16(data[NAVX_REG_YAW_L], data[NAVX_REG_YAW_H]))%36000)/100.0;
-    float extra = (actual + offset) - floor(actual + offset);
-    return (float((int(actual + offset)%360) + extra));
+    float extra = (actual - offset) - floor(actual - offset);
+    return (float((int(actual - offset)%360) + extra));
   }
 
-  void setZero() {
-    offset = (360.0 - actual);
+  void calibrate(float newRotation) {
+    offset = (actual - newRotation);
     if (logging) {
       Serial.print("Yaw: ");
       Serial.println(actual);
