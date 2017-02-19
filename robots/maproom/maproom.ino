@@ -1,5 +1,7 @@
 #include "Robot.h"
 
+#define ROBOT_ID 1
+
 #define LOGGING 1
 
 #define pwmA 6
@@ -32,7 +34,7 @@ int bufLen;
 bool bufDone;
 
 void setup() {
-  warby = Robot(0, dirA, pwmA, dirB, pwmB, dirC, pwmC, true);
+  warby = Robot(ROBOT_ID, dirA, pwmA, dirB, pwmB, dirC, pwmC, true);
   warby.stop();
 
   bufLen = 0;
@@ -121,6 +123,7 @@ void loop() {
 
     if (bufLen >= BUF_SIZE - 1) {
       Serial.println("BUF OVERRUN");
+      bufLen = 0;
       continue;
     }
 
@@ -133,9 +136,9 @@ void loop() {
   }
 
   if (bufDone) {
-    Serial.print("buf: ");
-    Serial.write(buf, bufLen);
-    Serial.println();
+    // Serial.print("buf: ");
+    // Serial.write(buf, bufLen);
+    // Serial.println();
     handleMessage(buf);
 
     bufDone = false;
@@ -144,10 +147,7 @@ void loop() {
 
   wait++;
   if (wait > 5000) {
-//    warby.getYaw();
-//    warby.setHeading(0, 300);
-//    warby.rotate(-100.0);
-//    warby.rotateSpecific(45.00);
+    Serial.println("SENRB0" + String(ROBOT_ID) + "HB");
     warby.cycle();
     wait = 0;
   }
