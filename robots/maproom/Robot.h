@@ -61,7 +61,7 @@ class Robot
     if (state == STATE_ROTATING) {
       float rotation = navx.getYaw();
 
-      if (rotation < headingDegree + ROTATION_ERROR && rotation > headingDegree - ROTATION_ERROR) {
+      if (abs(rotation - headingDegree) <  ROTATION_ERROR) {
         Serial.println("ALIGNED");
         stop();
       } else {
@@ -75,14 +75,13 @@ class Robot
         Serial.print(" CURRENT: ");
         Serial.print(rotation);
 
+        int switchDirection = (abs(headingDegree-rotation) > 180 ? -1 : 1);
         if (rotation > headingDegree) {
-          // wheel needs to turn CCW
-            Serial.println(" ROTATING CCW");
-            rotate(ROTATION_SPEED);
+          Serial.println(switchDirection == -1 ? " ROTATING CW" : " ROTATING CCW" );
+          rotate(switchDirection * ROTATION_SPEED);
         } else {
-          // wheels need to move CW
-            Serial.println(" ROTATING CW");
-            rotate(-ROTATION_SPEED);
+          Serial.println(switchDirection == -1 ? " ROTATING CCW" : " ROTATING CW" );
+          rotate(switchDirection * -ROTATION_SPEED);
         }
       }
     } else if (state == STATE_POSITIONING) {
