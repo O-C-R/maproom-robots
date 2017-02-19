@@ -43,7 +43,7 @@ class Robot
     motorC = Motor(dirC, pwmC, 240.0, logging);
 
     navx = Navx(logging);
-    navx.calibrate(0);
+    // navx.calibrate(0);
 
     marker = Marker(0);
   }
@@ -78,11 +78,11 @@ class Robot
         if (rotation > headingDegree) {
           // wheel needs to turn CCW
             Serial.println(" ROTATING CCW");
-            rotate(-ROTATION_SPEED);
+            rotate(ROTATION_SPEED);
         } else {
           // wheels need to move CW
             Serial.println(" ROTATING CW");
-            rotate(ROTATION_SPEED);
+            rotate(-ROTATION_SPEED);
         }
       }
     } else if (state == STATE_POSITIONING) {
@@ -111,6 +111,10 @@ class Robot
       Serial.println("Calibrating Yaw");
     }
     navx.calibrate(newAngle);
+  }
+
+  float getRotation() {
+    return navx.getYaw();
   }
 
   void stop() {

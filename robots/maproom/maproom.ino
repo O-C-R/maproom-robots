@@ -2,6 +2,8 @@
 
 #define ROBOT_ID 1
 
+#define HEARTBEAT 1
+
 #define LOGGING 1
 
 #define pwmA 6
@@ -136,9 +138,9 @@ void loop() {
   }
 
   if (bufDone) {
-    // Serial.print("buf: ");
-    // Serial.write(buf, bufLen);
-    // Serial.println();
+    Serial.print("buf: ");
+    Serial.write(buf, bufLen);
+    Serial.println();
     handleMessage(buf);
 
     bufDone = false;
@@ -147,7 +149,10 @@ void loop() {
 
   wait++;
   if (wait > 5000) {
-    Serial.println("SENRB0" + String(ROBOT_ID) + "HB");
+    if (HEARTBEAT) {
+      Serial.println("SENRB0" + String(ROBOT_ID) + "HB");
+    }
+    // Serial.println(warby.getRotation());
     warby.cycle();
     wait = 0;
   }
