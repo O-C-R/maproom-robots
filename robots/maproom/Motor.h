@@ -10,6 +10,8 @@ class Motor
   float angle; // orientation of the wheel
 
   public:
+
+  Motor() {}
   Motor(int dir_pin, int pwm_pin, float wheel_angle, bool logging)
   {
     logging = logging;
@@ -31,7 +33,8 @@ class Motor
 
   // vector sum of each wheel
   void driveVector(float dir, float mag) {
-    float w = mag * cos(angle - dir);
+    float rad = (angle - dir) * 3.14159 / 180;
+    float w = mag * cos(rad);
 
     // ccw = negative values, cw = positive
     direction = w < 0 ? true : false;

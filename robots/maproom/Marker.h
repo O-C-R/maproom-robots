@@ -5,6 +5,7 @@ class Marker {
   int movingCount;
 
   public:
+  Marker() {}
   Marker(int pos) {
     position = pos;
     movingCount = 0;

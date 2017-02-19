@@ -11,6 +11,8 @@
 #define pwmC 11
 #define dirC 12
 
+#define BUF_SIZE 125
+
 typedef struct {
   int pulse;
   bool direction;
@@ -23,19 +25,16 @@ MotorValues motorA;
 MotorValues motorB;
 MotorValues motorC;
 
-Robot * warby;
+Robot warby;
 
-char *buf;
+char buf[BUF_SIZE];
 int bufLen;
 bool bufDone;
 
-#define BUF_SIZE 1024
-
 void setup() {
-  warby = new Robot(0, dirA, pwmA, dirB, pwmB, dirC, pwmC, true);
-  warby->stop();
+  warby = Robot(0, dirA, pwmA, dirB, pwmB, dirC, pwmC, true);
+  warby.stop();
 
-  buf = (char *)malloc(BUF_SIZE * sizeof(char));
   bufLen = 0;
   bufDone = false;
 
@@ -55,7 +54,17 @@ void handleMessage(char *buf) {
     buf[11] = val;
     int mag = atoi(buf + 11);
 
-    warby->driveManager(dir, mag);
+    warby.driveManager(dir, mag);
+  } else if (buf[2] == 'D' && buf[3] == 'R' && buf[4] == 'W') {
+    // MOVE COMMAND
+
+    byte val = buf[11];
+    buf[11] = 0;
+    int dir = atoi(buf + 5);
+    buf[11] = val;
+    int mag = atoi(buf + 11);
+
+    warby.drawManager(dir, mag);
   } else if (buf[2] == 'R' && buf[3] == 'O' && buf[4] == 'T') {
     // ROTATE COMMAND
 
@@ -70,7 +79,7 @@ void handleMessage(char *buf) {
     Serial.print("measuredAngle: ");
     Serial.print(measuredAngle);
 
-    warby->rotateManager(desiredAngle, measuredAngle);
+    warby.rotateManager(desiredAngle, measuredAngle);
 
   } else if (buf[2] == 'X' && buf[3] == 'D' && buf[4] == 'R') {
     // DEBUG
@@ -85,18 +94,22 @@ void handleMessage(char *buf) {
     buf[17] = val;
     int w2_mag = atoi(buf + 17);
 
-    warby->driveSpecific(w0_mag, w1_mag, w2_mag);
+    warby.driveSpecific(w0_mag, w1_mag, w2_mag);
   } else if (buf[2] == 'C' && buf[3] == 'A' && buf[4] == 'L') {
     // CALIBRATE
 
     int newRotation = atoi(buf + 5);
-    warby->calibrate(newRotation);
+    warby.calibrate(newRotation);
 
+  } else if (buf[2] == 'S' && buf[3] == 'T' && buf[4] == 'P') {
+    // STOP
+
+    warby.stop();
   } else {
     Serial.print("Unknown message: ");
     Serial.println(buf);
 
-    warby->stop();
+    warby.stop();
   }
 }
 
@@ -131,11 +144,11 @@ void loop() {
 
   wait++;
   if (wait > 5000) {
-//    warby->getYaw();
-//    warby->setHeading(0, 300);
-//    warby->rotate(-100.0);
-//    warby->rotateSpecific(45.00);
-    warby->update();
+//    warby.getYaw();
+//    warby.setHeading(0, 300);
+//    warby.rotate(-100.0);
+//    warby.rotateSpecific(45.00);
+    warby.cycle();
     wait = 0;
   }
 }

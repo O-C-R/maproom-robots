@@ -14,7 +14,7 @@ class Navx
   float offset;
   float actual;
   public:
-
+  Navx() {}
   Navx(bool logging)
   {
     Wire.begin();
@@ -42,11 +42,5 @@ class Navx
 
   void calibrate(float newRotation) {
     offset = (actual - newRotation);
-    if (logging) {
-      Serial.print("Yaw: ");
-      Serial.println(actual);
-      Serial.print("Offset: ");
-      Serial.println(offset);
-    }
   }
 };

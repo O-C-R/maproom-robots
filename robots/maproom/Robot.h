@@ -1,6 +1,6 @@
 #include "Motor.h"
 #include "Navx.h"
-#include "Marker.h" 
+#include "Marker.h"
 
 #define STATE_WAITING 0
 #define STATE_ROTATING 1
@@ -23,38 +23,44 @@ class Robot
   float headingMag;
   float headingDegree;
 
-  Motor *motorA;
-  Motor *motorB;
-  Motor *motorC;
-  Navx *navx;
-  Marker *marker;
+  Motor motorA;
+  Motor motorB;
+  Motor motorC;
+  Navx navx;
+  Marker marker;
 
   public:
+  Robot() {}
   Robot(int id, int dirA, int pwmA, int dirB, int pwmB, int dirC, int pwmC, bool logging)
   {
     id = id;
     logging = logging;
 
-    motorA = new Motor(dirA, pwmA, 0.0, logging);
-    motorB = new Motor(dirB, pwmB, 120.0, logging);
-    motorC = new Motor(dirC, pwmC, 240.0, logging);
+    state = STATE_WAITING;
 
-    navx = new Navx(logging);
-    navx->calibrate(0);
+    motorA = Motor(dirA, pwmA, 0.0, logging);
+    motorB = Motor(dirB, pwmB, 120.0, logging);
+    motorC = Motor(dirC, pwmC, 240.0, logging);
 
-    marker = new Marker(0);
+    navx = Navx(logging);
+    navx.calibrate(0);
+
+    marker = Marker(0);
   }
 
-  void update() {
+  void cycle() {
     if (state == STATE_WAITING) {
-      if (marker->getPosition() != MARKER_UP) {
-        marker->setPosition(MARKER_UP);
+      if (marker.getPosition() != MARKER_UP ) {
+         marker.setPosition(MARKER_UP);
+         return;
       }
       return;
+
     }
 
     if (state == STATE_ROTATING) {
-      float rotation = navx->getYaw();
+      float rotation = navx.getYaw();
+
       if (rotation < headingDegree + ROTATION_ERROR && rotation > headingDegree - ROTATION_ERROR) {
         Serial.println("ALIGNED");
         stop();
@@ -80,38 +86,38 @@ class Robot
         }
       }
     } else if (state == STATE_POSITIONING) {
-      if (marker->getPosition() != MARKER_UP ) {
-        marker->setPosition(MARKER_UP);
-        return;
-      }
+       if (marker.getPosition() != MARKER_UP ) {
+         marker.setPosition(MARKER_UP);
+         return;
+       }
       drive();
     } else if (state == STATE_DRAWING) {
-      if (marker->getPosition() != MARKER_DOWN ) {
-        marker->setPosition(MARKER_DOWN);
-        return;
-      }
+       if (marker.getPosition() != MARKER_DOWN ) {
+         marker.setPosition(MARKER_DOWN);
+         return;
+       }
       drive();
     }
   }
 
   void commandMotors() {
-    motorA->commandMotor();
-    motorB->commandMotor();
-    motorC->commandMotor();
+    motorA.commandMotor();
+    motorB.commandMotor();
+    motorC.commandMotor();
   }
 
   void calibrate(float newAngle) {
     if(logging) {
       Serial.println("Calibrating Yaw");
     }
-    navx->calibrate(newAngle);
+    navx.calibrate(newAngle);
   }
 
   void stop() {
     state = STATE_WAITING;
-    motorA->stop();
-    motorB->stop();
-    motorC->stop();
+    motorA.stop();
+    motorB.stop();
+    motorC.stop();
 
     commandMotors();
   }
@@ -124,9 +130,9 @@ class Robot
   }
 
   void rotate(float speed) {
-    motorA->driveConstant(speed);
-    motorB->driveConstant(speed);
-    motorC->driveConstant(speed);
+    motorA.driveConstant(speed);
+    motorB.driveConstant(speed);
+    motorC.driveConstant(speed);
 
     commandMotors();
   }
@@ -143,23 +149,23 @@ class Robot
   }
 
   void drive() {
-    motorA->driveVector(headingDegree, headingMag);
-    motorB->driveVector(headingDegree, headingMag);
-    motorC->driveVector(headingDegree, headingMag);
+    motorA.driveVector(headingDegree, headingMag);
+    motorB.driveVector(headingDegree, headingMag);
+    motorC.driveVector(headingDegree, headingMag);
 
     commandMotors();
   }
 
   void driveSpecific(int w0, int w1, int w2) {
-    motorA->driveConstant(w0);
-    motorB->driveConstant(w1);
-    motorC->driveConstant(w2);
+    motorA.driveConstant(w0);
+    motorB.driveConstant(w1);
+    motorC.driveConstant(w2);
 
     commandMotors();
   }
 
   void drawManager(float dir, long mag) {
-    state = STATE_POSITIONING;
+    state = STATE_DRAWING;
 
     headingDegree = dir;
     headingMag = mag;
