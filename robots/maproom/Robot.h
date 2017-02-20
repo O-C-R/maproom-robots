@@ -15,8 +15,9 @@
 #define MARKER_UP 0
 
 // Speeds
-#define ROTATION_ERROR 1.0
-#define ROTATION_SPEED 126
+#define ROTATION_ERROR 0.5
+#define ROTATION_SPEED_MAX 125
+#define ROTATION_SPEED_MIN 50
 
 class Robot
 {
@@ -50,33 +51,21 @@ public:
   {}
 
   void stateRotate() {
-    // if (abs(navxRotation - headingDegree) <  ROTATION_ERROR) {
-    //   Serial.println("ALIGNED");
-    //   stop();
-    // } else {
-    //   Serial.print("upper: ");
-    //   Serial.print(headingDegree + ROTATION_ERROR);
-    //   Serial.print(" lower: ");
-    //   Serial.print(headingDegree - ROTATION_ERROR);
+    const float worldYaw = navx.worldYaw;
 
-    //   Serial.print(" HEADING: ");
-    //   Serial.print(headingDegree);
-    //   Serial.print(" CURRENT: ");
-    //   Serial.print(navxRotation);
+    const float headingDiff = fmod(targetHeading - worldYaw + 180.0, 360.0) - 180.0;
+    const float absHeadingDiff = abs(headingDiff);
 
-    //   int switchDirection = (abs(headingDegree-navxRotation) > 180 ? -1 : 1);
-    //   if (navxRotation > headingDegree) {
-    //     Serial.println(switchDirection == -1 ? " ROTATING CW" : " ROTATING CCW" );
-    //     rotate(switchDirection * ROTATION_SPEED);
-    //   } else {
-    //     Serial.println(switchDirection == -1 ? " ROTATING CCW" : " ROTATING CW" );
-    //     rotate(switchDirection * -ROTATION_SPEED);
-    //   }
-    // }
+    if (absHeadingDiff < ROTATION_ERROR) {
+      return stop();
+    }
+
+    float rotationSpeed = map(absHeadingDiff, 0.0, 180.0, ROTATION_SPEED_MIN, ROTATION_SPEED_MAX);
+    rotate(rotationSpeed * (headingDiff > 0 ? 1.0 : -1.0));
   }
 
   void update() {
-    const float worldYaw = navx.update();
+    navx.update();
 
     if (state == STATE_WAITING) {
       if (marker.getPosition() != MARKER_UP) {
@@ -85,9 +74,7 @@ public:
 
       stop();
     } else if (state == STATE_ROTATING) {
-      //stateRotate();
-
-      stop();
+      stateRotate();
     } else if (state == STATE_POSITIONING) {
       if (marker.getPosition() != MARKER_UP) {
         marker.setPosition(MARKER_UP);
@@ -137,9 +124,9 @@ public:
 
 #if LOGGING
     Serial.print("ROTATING to headingDegree: ");
-    Serial.print(headingDegree);
+    Serial.print(targetHeading);
     Serial.print(" got measured ");
-    Serial.println(measured);
+    Serial.println(remoteHeading);
 #endif
   }
 
