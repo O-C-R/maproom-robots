@@ -3,7 +3,7 @@
 
 // Change both of these if the ID of the robot changes
 #define ROBOT_ID 1
-#define HEARTBEAT_MSG "SENMR01HB"
+#define HEARTBEAT_MSG "SENRB01HB"
 
 // Serial options
 #define HEARTBEAT 1
