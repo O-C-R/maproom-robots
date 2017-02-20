@@ -14,6 +14,7 @@
 #define dirC 12
 
 #define BUF_SIZE 125
+#define BUF_VAL_WIDTH 6
 
 typedef struct {
   int pulse;
@@ -27,15 +28,15 @@ MotorValues motorA;
 MotorValues motorB;
 MotorValues motorC;
 
-Robot warby;
+Robot robot;
 
 char buf[BUF_SIZE];
 int bufLen;
 bool bufDone;
 
 void setup() {
-  warby = Robot(ROBOT_ID, dirA, pwmA, dirB, pwmB, dirC, pwmC, true);
-  warby.stop();
+  robot = Robot(ROBOT_ID, dirA, pwmA, dirB, pwmB, dirC, pwmC, LOGGING);
+  robot.stop();
 
   bufLen = 0;
   bufDone = false;
@@ -44,74 +45,91 @@ void setup() {
   Serial.println("Looping...");
 }
 
+inline bool match(const char *haystack, const char *needle, const int len) {
+  for (int i = 0; i < len; ++i) {
+    if (haystack[i] != needle[i]) {
+      return false;
+    }
+  }
+  return true;
+}
+
+// buf has format +00000+00000
+inline int extractInt(char *buf, const int idx) {
+  const int startIdx = idx * BUF_VAL_WIDTH;
+  const int endIdx = startIdx + BUF_VAL_WIDTH;
+
+  byte val = buf[endIdx];
+  buf[endIdx] = 0;
+  const int ret = atoi(buf + startIdx);
+  buf[endIdx] = val;
+
+  return ret;
+}
+
+// Message format: MRCMD+00000+00000
 void handleMessage(char *buf) {
-  if (buf[0] != 'M' && buf[1] != 'R') return;
+  if (!match(buf, "MR", 2)) {
+    // Not a maproom message
+    return;
+  }
 
-  if (buf[2] == 'M' && buf[3] == 'O' && buf[4] == 'V') {
+  // Advance 2 char past MR for msg
+  char *msg = buf + 2;
+
+  // Vals are 3 after that, as the command names are 3char
+  char *vals = msg + 3;
+
+  if (match(msg, "MOV", 3)) {
     // MOVE COMMAND
 
-    byte val = buf[11];
-    buf[11] = 0;
-    int dir = atoi(buf + 5);
-    buf[11] = val;
-    int mag = atoi(buf + 11);
+    int dir = extractInt(vals, 0);
+    int mag = extractInt(vals, 1);
 
-    warby.driveManager(dir, mag);
-  } else if (buf[2] == 'D' && buf[3] == 'R' && buf[4] == 'W') {
-    // MOVE COMMAND
+    robot.driveManager(dir, mag);
+  } else if (match(msg, "DRW", 3)) {
+    // DRAW COMMAND
 
-    byte val = buf[11];
-    buf[11] = 0;
-    int dir = atoi(buf + 5);
-    buf[11] = val;
-    int mag = atoi(buf + 11);
+    int dir = extractInt(vals, 0);
+    int mag = extractInt(vals, 1);
 
-    warby.drawManager(dir, mag);
-  } else if (buf[2] == 'R' && buf[3] == 'O' && buf[4] == 'T') {
+    robot.drawManager(dir, mag);
+  } else if (match(msg, "ROT", 3)) {
     // ROTATE COMMAND
 
-    byte val = buf[11];
-    buf[11] = 0;
-    int desiredAngle = atoi(buf + 5);
-    buf[11] = val;
-    int measuredAngle = atoi(buf + 11);
+    int desiredAngle = extractInt(vals, 0);
+    int measuredAngle = extractInt(vals, 1);
+
     Serial.println("ROTATE MESSAGE");
     Serial.print("desiredAngle: ");
     Serial.print(desiredAngle);
     Serial.print("measuredAngle: ");
     Serial.print(measuredAngle);
 
-    warby.rotateManager(desiredAngle, measuredAngle);
+    robot.rotateManager(desiredAngle, measuredAngle);
 
-  } else if (buf[2] == 'X' && buf[3] == 'D' && buf[4] == 'R') {
+  } else if (match(msg, "XDR", 3)) {
     // DEBUG
 
-    byte val = buf[11];
-    buf[11] = 0;
-    int w0_mag = atoi(buf + 5);
-    buf[11] = val;
-    val = buf[17];
-    buf[17] = 0;
-    int w1_mag = atoi(buf + 11);
-    buf[17] = val;
-    int w2_mag = atoi(buf + 17);
+    int w0_mag = extractInt(vals, 0);
+    int w1_mag = extractInt(vals, 1);
+    int w2_mag = extractInt(vals, 2);
 
-    warby.driveSpecific(w0_mag, w1_mag, w2_mag);
-  } else if (buf[2] == 'C' && buf[3] == 'A' && buf[4] == 'L') {
+    robot.driveSpecific(w0_mag, w1_mag, w2_mag);
+  } else if (match(msg, "CAL", 3)) {
     // CALIBRATE
 
-    int newRotation = atoi(buf + 5);
-    warby.calibrate(newRotation);
-
-  } else if (buf[2] == 'S' && buf[3] == 'T' && buf[4] == 'P') {
+    int newRotation = extractInt(vals, 0);
+    robot.calibrate(newRotation);
+  } else if (match(msg, "STP", 3)) {
     // STOP
 
-    warby.stop();
+    robot.stop();
   } else {
     Serial.print("Unknown message: ");
     Serial.println(buf);
 
-    warby.stop();
+    robot.stop();
   }
 }
 
@@ -136,9 +154,11 @@ void loop() {
   }
 
   if (bufDone) {
-    // Serial.print("buf: ");
-    // Serial.write(buf, bufLen);
-    // Serial.println();
+#if LOGGING
+    Serial.print("buf: ");
+    Serial.write(buf, bufLen);
+    Serial.println();
+#endif
     handleMessage(buf);
 
     bufDone = false;
@@ -148,7 +168,7 @@ void loop() {
   wait++;
   if (wait > 5000) {
     Serial.println("SENRB0" + String(ROBOT_ID) + "HB");
-    warby.cycle();
+    robot.cycle();
     wait = 0;
   }
 }
