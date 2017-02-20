@@ -6,6 +6,7 @@ import sys
 import argparse
 from threading import Thread
 from datetime import datetime
+import constants
 
 from pythonosc import osc_message_builder
 from pythonosc import udp_client
@@ -74,18 +75,6 @@ class CVVideoStream:
     # indicate that the thread should be stopped
     self.stopped = True
 
-dictionary = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_5X5_50)
-
-marker_size_in = 8
-marker_size_m = 0.2032
-ppi = 72
-
-robot01 = cv2.aruco.drawMarker(dictionary, 23, marker_size_in * ppi)
-cv2.imwrite('markers/robot01.png', robot01)
-
-robot02 = cv2.aruco.drawMarker(dictionary, 24, int(marker_size_in * ppi / 2.0))
-cv2.imwrite('markers/robot02.png', robot02)
-
 detector_params = cv2.aruco.DetectorParameters_create()
 detector_params.doCornerRefinement = True
 detector_params.cornerRefinementMaxIterations = 500
@@ -106,8 +95,8 @@ frameidx = 0
 while True:
   frame = vs.read()
   gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-  marker_corners, marker_ids, rejected = cv2.aruco.detectMarkers(gray, dictionary, parameters=detector_params)
-  rvecs, tvecs = cv2.aruco.estimatePoseSingleMarkers(marker_corners, marker_size_m, cameraMatrix, distCoeffs)
+  marker_corners, marker_ids, rejected = cv2.aruco.detectMarkers(gray, constants.marker_dictionary, parameters=detector_params)
+  rvecs, tvecs = cv2.aruco.estimatePoseSingleMarkers(marker_corners, constants.marker_size_m, cameraMatrix, distCoeffs)
 
   if args["display"]:
     cv2.aruco.drawDetectedMarkers(gray, marker_corners, marker_ids)
