@@ -1,27 +1,26 @@
 #include <Wire.h>
 #include <SoftwareSerial.h>
+#include <math.h>
+
 #include "./includes/AHRSProtocol.h"
 
 byte data[100];
 
-int read16(uint8_t low, uint8_t high) {
+inline int read16(uint8_t low, uint8_t high) {
   return low + (high << 8);
 }
 
-class Navx
-{
-  bool logging;
-  float offset;
-  float actual;
-  public:
-  Navx() {}
-  Navx(bool logging)
-  {
+class Navx {
+
+public:
+  float worldYaw;
+
+  Navx() {
     Wire.begin();
-    offset = 0.0;
+    worldRobotOffset = 0.0;
   }
 
-  float getYaw() {
+  float update() {
     int i = 0;
     Wire.beginTransmission(0x32); // NavX is at I2C bus 0x32
     Wire.write(0);
@@ -35,12 +34,23 @@ class Navx
     }
     Wire.endTransmission();
 
-    actual = 360.0 - float((36000 + read16(data[NAVX_REG_YAW_L], data[NAVX_REG_YAW_H]))%36000)/100.0;
-    float extra = (actual - offset) - floor(actual - offset);
-    return (float((int(actual - offset + 360)%360) + extra));
+    leftHandMeasured = float((36000 + read16(data[NAVX_REG_YAW_L], data[NAVX_REG_YAW_H]))%36000)/100.0;
+
+    // Swap to use right hand if needed
+    rightHandMeasured = 360.0 - leftHandMeasured;
+
+    // Compute world yaw in 0, 360
+    worldYaw = fmod(leftHandMeasured - worldRobotOffset + 360.0, 360.0);
+
+    return worldYaw;
   }
 
-  void calibrate(float newRotation) {
-    offset = (actual - newRotation);
+  // World is left handed
+  void calibrateToWorld(const float worldRotation) {
+    worldRobotOffset = leftHandMeasured - worldRotation;
   }
+
+private:
+  float rightHandMeasured, leftHandMeasured;
+  float worldRobotOffset;
 };
