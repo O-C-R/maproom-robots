@@ -1,9 +1,14 @@
 #include "Robot.h"
 
+// Change both of these if the ID of the robot changes
 #define ROBOT_ID 1
+#define HEARTBEAT_MSG "SENMR01HB"
 
+// Serial options
+#define HEARTBEAT 1
 #define LOGGING 1
 
+// Pins
 #define pwmA 6
 #define dirA 7
 
@@ -13,6 +18,7 @@
 #define pwmC 11
 #define dirC 12
 
+// Msg buffer
 #define BUF_SIZE 125
 #define BUF_VAL_WIDTH 6
 
@@ -100,11 +106,13 @@ void handleMessage(char *buf) {
     int desiredAngle = extractInt(vals, 0);
     int measuredAngle = extractInt(vals, 1);
 
+#if LOGGING
     Serial.println("ROTATE MESSAGE");
     Serial.print("desiredAngle: ");
     Serial.print(desiredAngle);
     Serial.print("measuredAngle: ");
     Serial.print(measuredAngle);
+#endif
 
     robot.rotateManager(desiredAngle, measuredAngle);
 
@@ -167,7 +175,10 @@ void loop() {
 
   wait++;
   if (wait > 5000) {
-    Serial.println("SENRB0" + String(ROBOT_ID) + "HB");
+#if HEARTBEAT
+    Serial.println(HEARTBEAT_MSG);
+#endif
+
     robot.cycle();
     wait = 0;
   }

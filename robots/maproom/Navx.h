@@ -35,9 +35,9 @@ class Navx
     }
     Wire.endTransmission();
 
-    actual = float((36000 + read16(data[NAVX_REG_YAW_L], data[NAVX_REG_YAW_H]))%36000)/100.0;
+    actual = 360.0 - float((36000 + read16(data[NAVX_REG_YAW_L], data[NAVX_REG_YAW_H]))%36000)/100.0;
     float extra = (actual - offset) - floor(actual - offset);
-    return (float((int(actual - offset)%360) + extra));
+    return (float((int(actual - offset + 360)%360) + extra));
   }
 
   void calibrate(float newRotation) {
