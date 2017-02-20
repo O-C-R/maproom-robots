@@ -1,3 +1,4 @@
+#include <AltSoftSerial.h>
 #include "Robot.h"
 
 // Change both of these if the ID of the robot changes
@@ -22,9 +23,11 @@
 #define BUF_SIZE 125
 #define BUF_VAL_WIDTH 6
 
-char buf[BUF_SIZE];
-int bufLen;
-bool bufDone;
+AltSoftSerial wifiSerial;
+
+char buf[BUF_SIZE], wifiBuf[BUF_SIZE];
+int bufLen, wifiBufLen;
+bool bufDone, wifiBufDone;
 
 Robot robot;
 
@@ -34,8 +37,12 @@ void setup() {
 
   bufLen = 0;
   bufDone = false;
+  wifiBufLen = 0;
+  wifiBufDone = false;
 
   Serial.begin(57600);
+  wifiSerial.begin(57600);
+
   Serial.println("Looping...");
 }
 
@@ -132,8 +139,10 @@ void handleMessage(char *buf) {
 int wait = 0;
 
 void loop() {
+  char inChar;
+
   while (Serial.available()) {
-    char inChar = (char)Serial.read();
+    inChar = (char)Serial.read();
 
     if (bufLen >= BUF_SIZE - 1) {
       Serial.println("BUF OVERRUN");
@@ -147,24 +156,53 @@ void loop() {
     } else if (!bufDone) {
       buf[bufLen++] = inChar;
     }
+
+    if (bufDone) {
+#if LOGGING
+      Serial.print("buf: ");
+      Serial.write(buf, bufLen);
+      Serial.println();
+#endif
+      handleMessage(buf);
+
+      bufDone = false;
+      bufLen = 0;
+    }
   }
 
-  if (bufDone) {
-#if LOGGING
-    Serial.print("buf: ");
-    Serial.write(buf, bufLen);
-    Serial.println();
-#endif
-    handleMessage(buf);
+  while (wifiSerial.available()) {
+    inChar = wifiSerial.read();
 
-    bufDone = false;
-    bufLen = 0;
+    if (wifiBufLen >= BUF_SIZE - 1) {
+      Serial.println("WIFI BUF OVERRUN");
+      wifiBufLen = 0;
+      continue;
+    }
+
+    if (!wifiBufDone && inChar == '\n') {
+      wifiBuf[wifiBufLen++] = 0;
+      wifiBufDone = true;
+    } else if (!bufDone) {
+      wifiBuf[wifiBufLen++] = inChar;
+    }
+
+    if (wifiBufDone) {
+#if LOGGING
+      Serial.print("wifiBuf: ");
+      Serial.write(wifiBuf, wifiBufLen);
+      Serial.println();
+#endif
+      handleMessage(wifiBuf);
+
+      wifiBufDone = false;
+      wifiBufLen = 0;
+    }
   }
 
   wait++;
   if (wait > 5000) {
 #if HEARTBEAT
-    Serial.println(HEARTBEAT_MSG);
+    wifiSerial.println(HEARTBEAT_MSG);
 #endif
 
     robot.cycle();
