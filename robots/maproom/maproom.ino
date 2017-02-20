@@ -22,23 +22,11 @@
 #define BUF_SIZE 125
 #define BUF_VAL_WIDTH 6
 
-typedef struct {
-  int pulse;
-  bool direction;
-
-  float current;
-  float target;
-} MotorValues;
-
-MotorValues motorA;
-MotorValues motorB;
-MotorValues motorC;
-
-Robot robot;
-
 char buf[BUF_SIZE];
 int bufLen;
 bool bufDone;
+
+Robot robot;
 
 void setup() {
   robot = Robot(ROBOT_ID, dirA, pwmA, dirB, pwmB, dirC, pwmC, LOGGING);
