@@ -2,34 +2,39 @@ static const float kHeadingCorrectionAmt = 20.0;
 
 class Motor
 {
-  bool logging;
+
+public:
+
   int pulse; // pwm signal mapped 0 - 255
   bool direction; // CW = positive, CCW = negative
 
   int pwm; // pwm pin
   int dir; // dir pin
 
-  float angle; // orientation of the wheel, degrees
-  float angleRad; // in radians
+  // Angle of the wheel from the center
+  float wheelAngle, wheelAngleRad;
 
+  // Angle that the wheel applies force at
+  float wheelForce, wheelForceRad;
+
+  // x and y components of the above force angle
   float xContrib, yContrib;
 
-  public:
-
   Motor() {}
-  Motor(int dir_pin, int pwm_pin, float wheel_angle, bool setLogging):
-    logging(setLogging),
+  Motor(int dirPin, int pwmPin, float inWheelAngle):
     pulse(0),
-    pwm(pwm_pin),
-    dir(dir_pin),
-    angle(wheel_angle)
+    dir(dirPin),
+    pwm(pwmPin),
+    wheelAngle(inWheelAngle),
+    wheelForce(inWheelAngle - 90)
   {
     pinMode(dir, OUTPUT);
 
-    angleRad = angle / 180.0 * 3.14159;
+    wheelAngleRad = wheelAngle / 180.0 * 3.14159;
+    wheelForceRad = wheelForce / 180.0 * 3.14159;
 
-    xContrib = cos(angleRad);
-    yContrib = sin(angleRad);
+    xContrib = cos(wheelForceRad);
+    yContrib = sin(wheelForceRad);
   }
 
   void commandMotor() {
@@ -46,9 +51,8 @@ class Motor
     const float worldAngleRH = 360.0 - worldAngle;
     const float worldAngleRHRad = worldAngleRH / 180.0 * 3.14159;
 
-    // Rotate 90 deg
-    const float xAmt = sin(worldAngleRHRad);
-    const float yAmt = cos(worldAngleRHRad);
+    const float xAmt = cos(worldAngleRHRad);
+    const float yAmt = sin(worldAngleRHRad);
 
     // Go!
     float move = mag * (xAmt * xContrib + yAmt * yContrib);
@@ -59,8 +63,7 @@ class Motor
     // Total
     const float w = move + rotate;
 
-    // ccw = negative values, cw = positive
-    direction = w < 0 ? true : false;
+    direction = w > 0 ? true : false;
     pulse = map(abs(w), 0, 600, 0, 255);
   }
 

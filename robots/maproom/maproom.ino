@@ -36,7 +36,7 @@ Robot robot;
 unsigned long lastHeartbeatTime;
 
 void setup() {
-  robot = Robot(ROBOT_ID, dirA, pwmA, dirB, pwmB, dirC, pwmC, LOGGING);
+  robot = Robot(ROBOT_ID, dirA, pwmA, dirB, pwmB, dirC, pwmC);
   robot.stop();
 
   bufLen = 0;
@@ -92,8 +92,9 @@ void handleMessage(char *buf) {
 
     int dir = extractInt(vals, 0);
     int mag = extractInt(vals, 1);
+    int measuredAngle = extractInt(vals, 2);
 
-    robot.commandPosition(dir, mag);
+    robot.commandPosition(dir, mag, measuredAngle);
   } else if (match(msg, "DRW", 3)) {
     // DRAW COMMAND
 

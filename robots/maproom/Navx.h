@@ -15,6 +15,9 @@ class Navx {
 public:
   float worldYaw;
 
+  float measured, measuredLH, measuredRH;
+  float worldRobotOffset;
+
   Navx() {
     Wire.begin();
     worldRobotOffset = 0.0;
@@ -34,23 +37,20 @@ public:
     }
     Wire.endTransmission();
 
-    leftHandMeasured = float((36000 + read16(data[NAVX_REG_YAW_L], data[NAVX_REG_YAW_H]))%36000)/100.0;
+    measuredLH = float((36000 + read16(data[NAVX_REG_YAW_L], data[NAVX_REG_YAW_H]))%36000)/100.0;
+    measuredRH = 360.0 - measuredLH;
 
-    // Swap to use right hand if needed
-    rightHandMeasured = 360.0 - leftHandMeasured;
+    // All other systems are right handed
+    measured = measuredRH;
 
     // Compute world yaw in 0, 360
-    worldYaw = fmod(leftHandMeasured - worldRobotOffset + 360.0, 360.0);
+    worldYaw = fmod(measured - worldRobotOffset + 360.0, 360.0);
 
     return worldYaw;
   }
 
   // World is left handed
   void calibrateToWorld(const float worldRotation) {
-    worldRobotOffset = leftHandMeasured - worldRotation;
+    worldRobotOffset = measured - worldRotation;
   }
-
-private:
-  float rightHandMeasured, leftHandMeasured;
-  float worldRobotOffset;
 };
