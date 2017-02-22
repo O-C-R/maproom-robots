@@ -36,8 +36,8 @@ void setup() {
 
   lastHeartbeatTime = 0;
 
-  Serial.begin(57600);
-  wifiSerial.begin(57600);
+  Serial.begin(19200);
+  wifiSerial.begin(19200);
 
   Serial.println("Looping...");
 }
@@ -65,7 +65,7 @@ inline int extractInt(char *buf, const int idx) {
 }
 
 // Message format: MRCMD+00000+00000
-void handleMessage(char *buf) {
+void handleMessage(char *buf, const int len) {
   if (!match(buf, "MR", 2)) {
     // Not a maproom message
     return;
@@ -121,14 +121,12 @@ void handleMessage(char *buf) {
 
     int newRotation = extractInt(vals, 0);
     robot.commandCalibrate(newRotation);
-  } else if (match(msg, "STP1", 4)) {
-    // STOP with pen down
-    robot.setPen(PEN_DOWN);
-    robot.stop();
-    robot.commandStop();
-  } else if (match(msg, "STP0", 4)) {
-    // STOP with pen up
-    robot.setPen(PEN_UP);
+  } else if (match(msg, "STP", 3)) {
+    if (vals[0] == '1') {
+      robot.setPen(PEN_UP);
+    } else {
+      robot.setPen(PEN_DOWN);
+    }
     robot.stop();
     robot.commandStop();
   } else {
@@ -166,7 +164,7 @@ void loop() {
       Serial.write(buf, bufLen);
       Serial.println();
 #endif
-      handleMessage(buf);
+      handleMessage(buf, bufLen);
 
       bufDone = false;
       bufLen = 0;
@@ -195,7 +193,8 @@ void loop() {
       Serial.write(wifiBuf, wifiBufLen);
       Serial.println();
 #endif
-      handleMessage(wifiBuf);
+
+      handleMessage(wifiBuf, wifiBufLen);
 
       wifiBufDone = false;
       wifiBufLen = 0;

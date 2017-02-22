@@ -80,13 +80,13 @@ public:
     rotate(rotationSpeed * (headingDiff > 0 ? -1.0 : 1.0));
   }
 
-  void stop() {
+  inline void stop() {
     motorA.stop();
     motorB.stop();
     motorC.stop();
   }
 
-  void commandMotors() {
+  inline void commandMotors() {
     motorA.commandMotor();
     motorB.commandMotor();
     motorC.commandMotor();
