@@ -1,7 +1,6 @@
 #include <AltSoftSerial.h>
 
-#define LOGGING 1
-
+#include "Constants.h"
 #include "Robot.h"
 
 // Change both of these if the ID of the robot changes
@@ -11,16 +10,6 @@
 // Serial options
 #define HEARTBEAT 1
 #define HEARTBEAT_TIMEOUT_MILLIS 500
-
-// Pins
-#define pwmA 6
-#define dirA 7
-
-#define pwmB 5
-#define dirB 4
-
-#define pwmC 11
-#define dirC 12
 
 // Msg buffer
 #define BUF_SIZE 125
@@ -36,7 +25,7 @@ Robot robot;
 unsigned long lastHeartbeatTime;
 
 void setup() {
-  robot = Robot(ROBOT_ID, dirA, pwmA, dirB, pwmB, dirC, pwmC);
+  robot = Robot(ROBOT_ID, PIN_DIR_A, PIN_PWM_A, PIN_DIR_B, PIN_PWM_B, PIN_DIR_C, PIN_PWM_C);
   robot.stop();
 
   bufLen = 0;
@@ -100,8 +89,9 @@ void handleMessage(char *buf) {
 
     int dir = extractInt(vals, 0);
     int mag = extractInt(vals, 1);
+    int measuredAngle = extractInt(vals, 2);
 
-    robot.commandDraw(dir, mag);
+    robot.commandDraw(dir, mag, measuredAngle);
   } else if (match(msg, "ROT", 3)) {
     // ROTATE COMMAND
 

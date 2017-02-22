@@ -4,8 +4,6 @@
 
 #include "./includes/AHRSProtocol.h"
 
-byte data[100];
-
 inline int read16(uint8_t low, uint8_t high) {
   return low + (high << 8);
 }
@@ -13,6 +11,8 @@ inline int read16(uint8_t low, uint8_t high) {
 class Navx {
 
 public:
+  byte data[100];
+
   float worldYaw;
 
   float measured, measuredLH, measuredRH;

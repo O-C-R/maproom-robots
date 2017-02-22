@@ -1,23 +1,7 @@
+#include <math.h>
 #include "Motor.h"
 #include "Navx.h"
-#include "Marker.h"
-#include <math.h>
-
-// States
-#define STATE_WAITING 0
-#define STATE_ROTATING 1
-#define STATE_POSITIONING 2
-#define STATE_DRAWING 3
-#define STATE_MOVING_MARKER 4
-
-// Pen states
-#define MARKER_DOWN 1
-#define MARKER_UP 0
-
-// Speeds
-#define ROTATION_ERROR 0.5
-#define ROTATION_SPEED_MAX 150
-#define ROTATION_SPEED_MIN 85
+#include "Pen.h"
 
 inline float angleDiff(const float a1, const float a2) {
   float difference = a1 - a2;
@@ -42,7 +26,7 @@ class Robot
   Motor motorB;
   Motor motorC;
   Navx navx;
-  Marker marker;
+  Pen pen;
 
 public:
   Robot() {}
@@ -51,8 +35,7 @@ public:
     state(STATE_WAITING),
     motorA(dirA, pwmA, 90.0),
     motorB(dirB, pwmB, 210.0),
-    motorC(dirC, pwmC, 330.0),
-    marker(0)
+    motorC(dirC, pwmC, 330.0)
   {}
 
   void setState(const int newState) {
@@ -87,34 +70,6 @@ public:
     rotate(rotationSpeed * (headingDiff > 0 ? -1.0 : 1.0));
   }
 
-  void update() {
-    navx.update();
-
-    if (state == STATE_WAITING) {
-      if (marker.getPosition() != MARKER_UP) {
-        marker.setPosition(MARKER_UP);
-      }
-
-      stop();
-    } else if (state == STATE_ROTATING) {
-      stateRotate();
-    } else if (state == STATE_POSITIONING) {
-      if (marker.getPosition() != MARKER_UP) {
-        marker.setPosition(MARKER_UP);
-      }
-
-      driveDirection();
-    } else if (state == STATE_DRAWING) {
-      if (marker.getPosition() != MARKER_DOWN) {
-        marker.setPosition(MARKER_DOWN);
-      }
-
-      driveDirection();
-    }
-
-    commandMotors();
-  }
-
   void stop() {
     motorA.stop();
     motorB.stop();
@@ -125,6 +80,35 @@ public:
     motorA.commandMotor();
     motorB.commandMotor();
     motorC.commandMotor();
+  }
+
+  void update() {
+    navx.update();
+    const unsigned long now = millis();
+
+    if (state == STATE_WAITING) {
+      if (pen.state != PEN_UP) {
+        pen.setState(PEN_UP);
+      }
+
+      stop();
+    } else if (state == STATE_ROTATING) {
+      stateRotate();
+    } else if (state == STATE_POSITIONING) {
+      if (pen.state != PEN_UP || (pen.state == PEN_UP && !pen.doneChanging(now))) {
+        pen.setState(PEN_UP);
+      } else {
+        driveDirection();
+      }
+    } else if (state == STATE_DRAWING) {
+      if (pen.state != PEN_DOWN || (pen.state == PEN_DOWN && !pen.doneChanging(now))) {
+        pen.setState(PEN_DOWN);
+      } else {
+        driveDirection();
+      }
+    }
+
+    commandMotors();
   }
 
   void commandCalibrate(const float worldAngle) {
@@ -155,7 +139,7 @@ public:
 #endif
   }
 
-  void commandPosition(const float dir, const long mag, const int measured) {
+  void commandPosition(const float dir, const int mag, const int measured) {
     setState(STATE_POSITIONING);
 
     driveHeading = dir;
@@ -172,11 +156,14 @@ public:
 #endif
   }
 
-  void commandDraw(const float dir, const long mag) {
+  void commandDraw(const float dir, const int mag, const int measured) {
     setState(STATE_DRAWING);
 
     driveHeading = dir;
     driveMag = mag;
+
+    lastNavxHeading = navx.worldYaw;
+    navx.calibrateToWorld(measured);
 
 #if LOGGING
     Serial.print("DRAWING – heading: ");
