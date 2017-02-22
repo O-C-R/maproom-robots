@@ -18,8 +18,11 @@ calibrate(current_angle)
 draw(heading_angle, magnitude)
 `MRDRW+00000+00000`
 
-stop()
-`MRSTP`
+stop_pen_down()
+`MRSTP1`
+
+stop_pen_up()
+`MRSTP0`
 
 #### Robot -> Coordinator
 

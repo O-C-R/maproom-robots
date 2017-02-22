@@ -47,6 +47,16 @@ public:
     state = newState;
   }
 
+  void setPen(const int penState) {
+    if (penState == PEN_UP) {
+      pen.setState(PEN_UP);
+    } else if (penState == PEN_DOWN) {
+      pen.setState(PEN_DOWN);
+    } else {
+      Serial.println("unknown pen state");
+    }
+  }
+
   void stateRotate() {
     const float worldYaw = navx.worldYaw;
 

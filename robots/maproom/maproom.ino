@@ -120,9 +120,15 @@ void handleMessage(char *buf) {
 
     int newRotation = extractInt(vals, 0);
     robot.commandCalibrate(newRotation);
-  } else if (match(msg, "STP", 3)) {
-    // STOP
-
+  } else if (match(msg, "STP1", 4)) {
+    // STOP with pen down
+    robot.setPen(PEN_DOWN);
+    robot.stop();
+    robot.commandStop();
+  } else if (match(msg, "STP0", 4)) {
+    // STOP with pen up
+    robot.setPen(PEN_UP);
+    robot.stop();
     robot.commandStop();
   } else {
     Serial.print("Unknown message: ");
