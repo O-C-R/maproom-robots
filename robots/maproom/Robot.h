@@ -107,12 +107,14 @@ public:
     } else if (state == STATE_POSITIONING) {
       if (pen.state != PEN_UP || (pen.state == PEN_UP && !pen.doneChanging(now))) {
         pen.setState(PEN_UP);
+        stop();
       } else {
         driveDirection();
       }
     } else if (state == STATE_DRAWING) {
       if (pen.state != PEN_DOWN || (pen.state == PEN_DOWN && !pen.doneChanging(now))) {
         pen.setState(PEN_DOWN);
+        stop();
       } else {
         driveDirection();
       }
