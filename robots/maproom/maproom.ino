@@ -4,8 +4,8 @@
 #include "Robot.h"
 
 // Change both of these if the ID of the robot changes
-#define ROBOT_ID 1
-#define HEARTBEAT_MSG "SENRB01HB"
+#define ROBOT_ID 2
+#define HEARTBEAT_MSG "SENRB02HB"
 
 // Serial options
 #define HEARTBEAT 1

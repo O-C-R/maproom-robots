@@ -143,7 +143,7 @@ public:
 
     targetHeading = target;
     remoteHeading = measured;
-    navx.calibrateToWorld(measured);
+    // navx.calibrateToWorld(measured);
 
 #if LOGGING
     Serial.print("ROTATING to headingDegree: ");
