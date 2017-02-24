@@ -63,13 +63,13 @@ public:
     // Total
     const float w = move + rotate;
 
-    direction = w < 0 ? true : false;
+    direction = w < 0 ? MOTORS_DIR : !MOTORS_DIR;
     pulse = map(abs(w), 0, 600, 0, 255);
   }
 
   // runs each motor at constant rate
   void driveConstant(float speed) {
-    direction = speed > 0 ? true : false;
+    direction = speed > 0 ? MOTORS_DIR : !MOTORS_DIR;
     pulse = map(abs(speed), 0, 600, 0, 255);
   }
 };

@@ -1,5 +1,8 @@
 #define LOGGING 1
 
+// Some robots are backwards
+#define MOTORS_DIR false
+
 // Pins
 #define PIN_PWM_A 6
 #define PIN_DIR_A 7

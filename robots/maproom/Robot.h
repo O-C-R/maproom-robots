@@ -97,23 +97,25 @@ public:
     const unsigned long now = millis();
 
     if (state == STATE_WAITING) {
-      if (pen.state != PEN_UP) {
-        pen.setState(PEN_UP);
-      }
-
       stop();
     } else if (state == STATE_ROTATING) {
       stateRotate();
     } else if (state == STATE_POSITIONING) {
-      if (pen.state != PEN_UP || (pen.state == PEN_UP && !pen.doneChanging(now))) {
+      if (pen.state != PEN_UP) {
         pen.setState(PEN_UP);
+      }
+
+      if (pen.state == PEN_UP && !pen.doneChanging(now)) {
         stop();
       } else {
         driveDirection();
       }
     } else if (state == STATE_DRAWING) {
-      if (pen.state != PEN_DOWN || (pen.state == PEN_DOWN && !pen.doneChanging(now))) {
+      if (pen.state != PEN_DOWN) {
         pen.setState(PEN_DOWN);
+      }
+
+      if (pen.state == PEN_DOWN && !pen.doneChanging(now)) {
         stop();
       } else {
         driveDirection();

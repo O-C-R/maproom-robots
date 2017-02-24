@@ -18,6 +18,7 @@ public:
     }
 
     state = newState;
+    penChangeTime = millis();
   }
 
   bool doneChanging(const unsigned long now) {

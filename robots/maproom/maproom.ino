@@ -123,10 +123,11 @@ void handleMessage(char *buf, const int len) {
     robot.commandCalibrate(newRotation);
   } else if (match(msg, "STP", 3)) {
     if (vals[0] == '1') {
-      robot.setPen(PEN_UP);
-    } else {
       robot.setPen(PEN_DOWN);
+    } else {
+      robot.setPen(PEN_UP);
     }
+
     robot.stop();
     robot.commandStop();
   } else {
