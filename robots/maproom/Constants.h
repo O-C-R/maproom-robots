@@ -34,5 +34,5 @@
 // Time for pen to move between states
 #define PEN_MOVING_TIME 200
 
-#define PEN_DOWN_VAL 1000
-#define PEN_UP_VAL 1700
+#define PEN_DOWN_VAL 90
+#define PEN_UP_VAL 100

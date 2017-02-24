@@ -1,4 +1,4 @@
-#include <AltSoftSerial.h>
+#include <Servo.h>
 
 #include "Constants.h"
 #include "Robot.h"
@@ -15,11 +15,9 @@
 #define BUF_SIZE 125
 #define BUF_VAL_WIDTH 6
 
-AltSoftSerial wifiSerial;
-
-char buf[BUF_SIZE], wifiBuf[BUF_SIZE];
-int bufLen, wifiBufLen;
-bool bufDone, wifiBufDone;
+char buf[BUF_SIZE];
+int bufLen;
+bool bufDone;
 
 Robot robot;
 unsigned long lastHeartbeatTime;
@@ -30,13 +28,10 @@ void setup() {
 
   bufLen = 0;
   bufDone = false;
-  wifiBufLen = 0;
-  wifiBufDone = false;
 
   lastHeartbeatTime = 0;
 
   Serial.begin(19200);
-  wifiSerial.begin(19200);
 
   Serial.println("Looping...");
 }
@@ -141,6 +136,7 @@ int wait = 0;
 
 void loop() {
   char inChar;
+  const unsigned long now = millis();
 
   while (Serial.available()) {
     inChar = (char)Serial.read();
@@ -171,42 +167,10 @@ void loop() {
     }
   }
 
-  while (wifiSerial.available()) {
-    inChar = wifiSerial.read();
-
-    if (wifiBufLen >= BUF_SIZE - 1) {
-      Serial.println("WIFI BUF OVERRUN");
-      wifiBufLen = 0;
-      continue;
-    }
-
-    if (!wifiBufDone && inChar == '\n') {
-      wifiBuf[wifiBufLen++] = 0;
-      wifiBufDone = true;
-    } else if (!bufDone) {
-      wifiBuf[wifiBufLen++] = inChar;
-    }
-
-    if (wifiBufDone) {
-#if LOGGING
-      Serial.print("wifiBuf: ");
-      Serial.write(wifiBuf, wifiBufLen);
-      Serial.println();
-#endif
-
-      handleMessage(wifiBuf, wifiBufLen);
-
-      wifiBufDone = false;
-      wifiBufLen = 0;
-    }
-  }
-
-  const unsigned long now = millis();
-
 #if HEARTBEAT
   if (now - lastHeartbeatTime >= HEARTBEAT_TIMEOUT_MILLIS) {
     lastHeartbeatTime = now;
-    wifiSerial.println(HEARTBEAT_MSG);
+    Serial.println(HEARTBEAT_MSG);
   }
 #endif
 

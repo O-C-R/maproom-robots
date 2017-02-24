@@ -1,10 +1,7 @@
-#include "Constants.h"
-#include <ServoTimer2.h>
-
 class Pen {
 
 public:
-  ServoTimer2 servo;
+  Servo servo;
 
   int state;
   unsigned long penChangeTime;
