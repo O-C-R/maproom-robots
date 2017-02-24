@@ -38,6 +38,12 @@ public:
     motorC(dirC, pwmC, 240.0)
   {}
 
+  void setup() {
+    pen.setup();
+    setPen(PEN_UP);
+    stop();
+  }
+
   void setState(const int newState) {
     Serial.print("State transition from ");
     Serial.print(state);

@@ -26,8 +26,7 @@ unsigned long lastHeartbeatTime;
 
 void setup() {
   robot = Robot(ROBOT_ID, PIN_DIR_A, PIN_PWM_A, PIN_DIR_B, PIN_PWM_B, PIN_DIR_C, PIN_PWM_C);
-  robot.setPen(PEN_UP);
-  robot.stop();
+  robot.setup();
 
   bufLen = 0;
   bufDone = false;
