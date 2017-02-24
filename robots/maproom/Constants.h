@@ -10,10 +10,10 @@
 #define PIN_PWM_B 5
 #define PIN_DIR_B 4
 
-#define PIN_PWM_C 11
-#define PIN_DIR_C 12
+#define PIN_PWM_C 3
+#define PIN_DIR_C 2
 
-#define PIN_PEN 3
+#define PIN_PEN 12
 
 // Speeds
 #define ROTATION_ERROR 0.5
