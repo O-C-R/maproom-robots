@@ -33,9 +33,9 @@ public:
   Robot(int id, int dirA, int pwmA, int dirB, int pwmB, int dirC, int pwmC):
     id(id),
     state(STATE_WAITING),
-    motorA(dirA, pwmA, 90.0),
-    motorB(dirB, pwmB, 210.0),
-    motorC(dirC, pwmC, 330.0)
+    motorA(dirA, pwmA, 0.0),
+    motorB(dirB, pwmB, 120.0),
+    motorC(dirC, pwmC, 240.0)
   {}
 
   void setState(const int newState) {

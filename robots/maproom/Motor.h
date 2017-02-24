@@ -63,7 +63,7 @@ public:
     // Total
     const float w = move + rotate;
 
-    direction = w > 0 ? true : false;
+    direction = w < 0 ? true : false;
     pulse = map(abs(w), 0, 600, 0, 255);
   }
 
