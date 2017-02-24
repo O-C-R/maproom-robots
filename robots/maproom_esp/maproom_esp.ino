@@ -43,9 +43,9 @@ void WiFiEvent(WiFiEvent_t event) {
 }
 
 void setup() {
-    Serial.begin(57600);
+    Serial.begin(19200);
     delay(10);
-    
+
     Serial.println("ESSTART");
 
     WiFi.setAutoReconnect(true);
@@ -59,7 +59,7 @@ void setup() {
 
 void loop() {
   long now = millis();
-  
+
   if (now - lastTime > 3000) {
     Serial.println("ESHB");
     lastTime = now;
@@ -105,14 +105,13 @@ void loop() {
     }
 
     bufLen = 0;
-    bufDone = false; 
+    bufDone = false;
   }
 
   int packetSize = udp.parsePacket();
   if (packetSize) {
     int len = udp.read(incomingPacket, 255);
-    if (len > 0)
-    {
+    if (len > 0) {
       incomingPacket[len] = 0;
     }
     Serial.write(incomingPacket);
