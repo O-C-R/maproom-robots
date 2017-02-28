@@ -171,8 +171,9 @@ public:
     if (state != STATE_POSITIONING) {
       setState(STATE_POSITIONING);
 
-      targetHeading = worldYaw;
       navx.calibrateToWorld(measured);
+      worldYaw = navx.update();
+      targetHeading = worldYaw;
       yawPID.reset();
     }
 
@@ -191,8 +192,9 @@ public:
     if (state != STATE_DRAWING) {
       setState(STATE_DRAWING);
 
-      targetHeading = worldYaw;
       navx.calibrateToWorld(measured);
+      worldYaw = navx.update();
+      targetHeading = worldYaw;
       yawPID.reset();
     }
 

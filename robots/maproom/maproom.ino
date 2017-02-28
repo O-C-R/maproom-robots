@@ -5,8 +5,8 @@
 #include "Robot.h"
 
 // Change both of these if the ID of the robot changes
-#define ROBOT_ID 1
-#define HEARTBEAT_MSG "SENRB01HB"
+#define ROBOT_ID 2
+#define HEARTBEAT_MSG "SENRB02HB"
 
 // Serial options
 #define HEARTBEAT 1
@@ -77,6 +77,11 @@ void handleMessage(char *buf, const int len) {
   if (match(msg, "MOV", 3)) {
     // MOVE COMMAND
 
+    if (len != 23) {
+      Serial.println("Bad length");
+      return;
+    }
+
     int dir = extractInt(vals, 0);
     int mag = extractInt(vals, 1);
     int measuredAngle = extractInt(vals, 2);
@@ -84,6 +89,11 @@ void handleMessage(char *buf, const int len) {
     robot.commandPosition(dir, mag, measuredAngle);
   } else if (match(msg, "DRW", 3)) {
     // DRAW COMMAND
+
+    if (len != 23) {
+      Serial.println("Bad length");
+      return;
+    }
 
     int dir = extractInt(vals, 0);
     int mag = extractInt(vals, 1);
@@ -93,28 +103,22 @@ void handleMessage(char *buf, const int len) {
   } else if (match(msg, "ROT", 3)) {
     // ROTATE COMMAND
 
+    if (len != 17) {
+      Serial.println("Bad length");
+      return;
+    }
+
     int desiredAngle = extractInt(vals, 0);
     int measuredAngle = extractInt(vals, 1);
 
-#if LOGGING
-    Serial.println("ROTATE MESSAGE");
-    Serial.print("desiredAngle: ");
-    Serial.print(desiredAngle);
-    Serial.print("measuredAngle: ");
-    Serial.print(measuredAngle);
-#endif
-
     robot.commandRotate(desiredAngle, measuredAngle);
-  } else if (match(msg, "XDR", 3)) {
-    // DEBUG
-
-    // int w0_mag = extractInt(vals, 0);
-    // int w1_mag = extractInt(vals, 1);
-    // int w2_mag = extractInt(vals, 2);
-
-    // robot.commandDriveSpecific(w0_mag, w1_mag, w2_mag);
   } else if (match(msg, "CAL", 3)) {
     // CALIBRATE
+
+    if (len != 11) {
+      Serial.println("Bad length");
+      return;
+    }
 
     int newRotation = extractInt(vals, 0);
     robot.commandCalibrate(newRotation);
