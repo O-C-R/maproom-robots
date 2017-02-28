@@ -1,5 +1,3 @@
-static const float kHeadingCorrectionAmt = 20.0;
-
 class Motor
 {
 
@@ -26,7 +24,7 @@ public:
     dir(dirPin),
     pwm(pwmPin),
     wheelAngle(inWheelAngle),
-    wheelForce(inWheelAngle - 90)
+    wheelForce(inWheelAngle + 90)
   {
     pinMode(dir, OUTPUT);
 
@@ -46,8 +44,8 @@ public:
     pulse = 0;
   }
 
-  // vector sum of each wheel
   void driveVector(const float worldAngle, const float mag, const float headingCorrection) {
+    // It's not clear to me why this is still wrong. But it seems to work.
     const float worldAngleRH = 360.0 - worldAngle;
     const float worldAngleRHRad = worldAngleRH / 180.0 * 3.14159;
 
@@ -55,21 +53,18 @@ public:
     const float yAmt = sin(worldAngleRHRad);
 
     // Go!
-    float move = mag * (xAmt * xContrib + yAmt * yContrib);
-
-    // Correct our heading
-    const float rotate = kHeadingCorrectionAmt * headingCorrection;
+    const float move = mag * (xAmt * xContrib + yAmt * yContrib);
 
     // Total
-    const float w = move + rotate;
+    const float speed = move + headingCorrection;
 
-    direction = w < 0 ? MOTORS_DIR : !MOTORS_DIR;
-    pulse = map(abs(w), 0, 600, 0, 255);
+    direction = speed > 0 ? MOTORS_DIR : !MOTORS_DIR;
+    pulse = map(abs(speed), 0, 600, 22, 255);
   }
 
   // runs each motor at constant rate
   void driveConstant(float speed) {
     direction = speed > 0 ? MOTORS_DIR : !MOTORS_DIR;
-    pulse = map(abs(speed), 0, 600, 0, 255);
+    pulse = map(abs(speed), 0, 600, 22, 255);
   }
 };

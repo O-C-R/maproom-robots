@@ -3,6 +3,11 @@
 #include "Navx.h"
 #include "Pen.h"
 
+//Specify the links and initial tuning parameters
+#define YAW_PID_KP 12.0
+#define YAW_PID_KI 0.3
+#define YAW_PID_KD 10.0
+
 inline float angleDiff(const float a1, const float a2) {
   float difference = a1 - a2;
   if (difference < -180) difference += 360;
@@ -15,10 +20,11 @@ class Robot
   int id;
   int state;
 
+  MiniPID yawPID;
+  float yawPIDOutput;
+  float worldYaw;
   float targetHeading;
-  float remoteHeading;
 
-  float lastNavxHeading;
   float driveHeading;
   float driveMag;
 
@@ -29,19 +35,27 @@ class Robot
   Pen pen;
 
 public:
-  Robot() {}
   Robot(int id, int dirA, int pwmA, int dirB, int pwmB, int dirC, int pwmC):
     id(id),
     state(STATE_WAITING),
+    targetHeading(0),
+    yawPIDOutput(0),
     motorA(dirA, pwmA, 0.0),
     motorB(dirB, pwmB, 120.0),
-    motorC(dirC, pwmC, 240.0)
-  {}
+    motorC(dirC, pwmC, 240.0),
+    yawPID(YAW_PID_KP, YAW_PID_KI, YAW_PID_KD)
+  {
+    yawPID.setOutputLimits(-200.0, 200.0);
+    yawPID.setMaxIOutput(50.0);
+  }
+
+  Robot(): Robot(-1, -1, -1, -1, -1, -1, -1) {}
 
   void setup() {
     pen.setup();
     setPen(PEN_UP);
     stop();
+    navx.setup();
   }
 
   void setState(const int newState) {
@@ -64,26 +78,7 @@ public:
   }
 
   void stateRotate() {
-    const float worldYaw = navx.worldYaw;
-
-    const float headingDiff = angleDiff(targetHeading, worldYaw);
-    const float absHeadingDiff = abs(headingDiff);
-
-    Serial.print("Heading diff: ");
-    Serial.println(headingDiff);
-
-    if (absHeadingDiff < ROTATION_ERROR) {
-      Serial.print("Done rotating, got to: ");
-      Serial.println(worldYaw);
-
-      stop();
-      setState(STATE_WAITING);
-
-      return;
-    }
-
-    float rotationSpeed = map(absHeadingDiff, 0.0, 180.0, ROTATION_SPEED_MIN, ROTATION_SPEED_MAX);
-    rotate(rotationSpeed * (headingDiff > 0 ? -1.0 : 1.0));
+    rotate(yawPIDOutput);
   }
 
   inline void stop() {
@@ -98,13 +93,20 @@ public:
     motorC.commandMotor();
   }
 
+  void updatePID() {
+    const float headingDiff = angleDiff(targetHeading, worldYaw);
+    yawPIDOutput = yawPID.getOutput(headingDiff, 0);
+  }
+
   void update() {
-    navx.update();
     const unsigned long now = millis();
+
+    worldYaw = navx.update();
 
     if (state == STATE_WAITING) {
       stop();
     } else if (state == STATE_ROTATING) {
+      updatePID();
       stateRotate();
     } else if (state == STATE_POSITIONING) {
       if (pen.state != PEN_UP) {
@@ -114,6 +116,7 @@ public:
       if (pen.state == PEN_UP && !pen.doneChanging(now)) {
         stop();
       } else {
+        updatePID();
         driveDirection();
       }
     } else if (state == STATE_DRAWING) {
@@ -124,6 +127,7 @@ public:
       if (pen.state == PEN_DOWN && !pen.doneChanging(now)) {
         stop();
       } else {
+        updatePID();
         driveDirection();
       }
     }
@@ -133,9 +137,10 @@ public:
 
   void commandCalibrate(const float worldAngle) {
     navx.calibrateToWorld(worldAngle);
+    yawPID.reset();
 
 #if LOGGING
-    const float worldYaw = navx.update();
+    worldYaw = navx.update();
 
     Serial.print("Calibrating yaw, world angle is: ");
     Serial.println(worldAngle);
@@ -145,28 +150,34 @@ public:
   }
 
   void commandRotate(const float target, const float measured) {
-    setState(STATE_ROTATING);
+    if (state != STATE_ROTATING) {
+      setState(STATE_ROTATING);
+
+      navx.calibrateToWorld(measured);
+      yawPID.reset();
+    }
 
     targetHeading = target;
-    remoteHeading = measured;
-    // navx.calibrateToWorld(measured);
 
 #if LOGGING
     Serial.print("ROTATING to headingDegree: ");
     Serial.print(targetHeading);
     Serial.print(" got measured ");
-    Serial.println(remoteHeading);
+    Serial.println(measured);
 #endif
   }
 
   void commandPosition(const float dir, const int mag, const int measured) {
-    setState(STATE_POSITIONING);
+    if (state != STATE_POSITIONING) {
+      setState(STATE_POSITIONING);
+
+      targetHeading = worldYaw;
+      navx.calibrateToWorld(measured);
+      yawPID.reset();
+    }
 
     driveHeading = dir;
     driveMag = mag;
-
-    lastNavxHeading = navx.worldYaw;
-    navx.calibrateToWorld(measured);
 
 #if LOGGING
     Serial.print("POSITIONING – heading: ");
@@ -177,18 +188,21 @@ public:
   }
 
   void commandDraw(const float dir, const int mag, const int measured) {
-    setState(STATE_DRAWING);
+    if (state != STATE_DRAWING) {
+      setState(STATE_DRAWING);
+
+      targetHeading = worldYaw;
+      navx.calibrateToWorld(measured);
+      yawPID.reset();
+    }
 
     driveHeading = dir;
     driveMag = mag;
 
-    lastNavxHeading = navx.worldYaw;
-    navx.calibrateToWorld(measured);
-
 #if LOGGING
     Serial.print("DRAWING – heading: ");
     Serial.println(driveHeading);
-    Serial.print("mage: ");
+    Serial.print("mag: ");
     Serial.println(driveMag);
 #endif
   }
@@ -198,12 +212,11 @@ public:
   }
 
   void driveDirection() {
-    const float worldHeading = navx.worldYaw;
-    const float direction = fmod(driveHeading - worldHeading + 360.0, 360.0);
+    const float direction = fmod(driveHeading - worldYaw + 360.0, 360.0);
 
-    motorA.driveVector(direction, driveMag, 0);
-    motorB.driveVector(direction, driveMag, 0);
-    motorC.driveVector(direction, driveMag, 0);
+    motorA.driveVector(direction, driveMag, yawPIDOutput);
+    motorB.driveVector(direction, driveMag, yawPIDOutput);
+    motorC.driveVector(direction, driveMag, yawPIDOutput);
   }
 
   void driveSpecific(int w0, int w1, int w2) {

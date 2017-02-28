@@ -14,7 +14,7 @@ const char *ssid     = "StLouisMaproom";
 const char *password = "CreativeResearch";
 const unsigned int localUdpPort = 5111;
 
-IPAddress remIP(192, 168, 1, 20);
+IPAddress remIP(192, 168, 7, 20);
 const int remPort = 5101;
 
 char buf[255];
@@ -24,18 +24,14 @@ bool bufDone = false;
 WiFiUDP udp;
 char incomingPacket[MAX_PACKET_LENGTH];
 
-long lastHeartbeatTime;
+long lastHeartbeatTime = 0;
 
 void setup() {
     Serial.begin(19200);
-    delay(10);
-
-    Serial.println("ESSTART");
+    Serial.println("ESBOOT");
 
     WiFi.begin(ssid, password);
-    WiFi.setAutoReconnect(true);
-
-    lastHeartbeatTime = 0;
+    Serial.println("ESSTART");
 }
 
 void loop() {

@@ -1,8 +1,9 @@
-#include <Wire.h>
-#include <SoftwareSerial.h>
+#include <I2C.h>
 #include <math.h>
 
 #include "./includes/AHRSProtocol.h"
+
+#define NAVX 0x32
 
 inline int read16(uint8_t low, uint8_t high) {
   return low + (high << 8);
@@ -11,31 +12,24 @@ inline int read16(uint8_t low, uint8_t high) {
 class Navx {
 
 public:
-  byte data[100];
+  uint8_t data[100];
 
   float worldYaw;
 
   float measured, measuredLH, measuredRH;
   float worldRobotOffset;
 
-  Navx() {
-    Wire.begin();
-    worldRobotOffset = 0.0;
+  Navx(): worldRobotOffset(0.0) {}
+
+  void setup() {
+    I2c.begin();
+    I2c.pullup(true);
+    I2c.timeOut(200);
   }
 
   float update() {
-    int i = 0;
-    Wire.beginTransmission(0x32); // NavX is at I2C bus 0x32
-    Wire.write(0);
-    Wire.write(32);
-    Wire.endTransmission();
-
-    Wire.beginTransmission(0x32);
-    Wire.requestFrom(0x32,32);
-    while(Wire.available()) {
-       data[i++] = Wire.read();
-    }
-    Wire.endTransmission();
+    I2c.write(NAVX, 0, 32);
+    I2c.read(NAVX, 32, data);
 
     measuredLH = float((36000 + read16(data[NAVX_REG_YAW_L], data[NAVX_REG_YAW_H]))%36000)/100.0;
     measuredRH = 360.0 - measuredLH;

@@ -1,11 +1,12 @@
 #include <Servo.h>
+#include <MiniPID.h>
 
 #include "Constants.h"
 #include "Robot.h"
 
 // Change both of these if the ID of the robot changes
-#define ROBOT_ID 2
-#define HEARTBEAT_MSG "SENRB02HB"
+#define ROBOT_ID 1
+#define HEARTBEAT_MSG "SENRB01HB"
 
 // Serial options
 #define HEARTBEAT 1
@@ -15,9 +16,9 @@
 #define BUF_SIZE 125
 #define BUF_VAL_WIDTH 6
 
-char buf[BUF_SIZE];
-int bufLen;
-bool bufDone;
+char buf[BUF_SIZE], buf2[BUF_SIZE];
+int bufLen, bufLen2;
+bool bufDone, bufDone2;
 
 Robot robot;
 unsigned long lastHeartbeatTime;
@@ -32,8 +33,10 @@ void setup() {
   lastHeartbeatTime = 0;
 
   Serial.begin(19200);
+  Serial1.begin(19200);
 
   Serial.println("Looping...");
+  Serial1.println("MRSTART");
 }
 
 inline bool match(const char *haystack, const char *needle, const int len) {
@@ -148,7 +151,7 @@ void loop() {
     }
 
     if (!bufDone && inChar == '\n') {
-      buf[bufLen++] = 0;
+      buf[bufLen+1] = 0;
       bufDone = true;
     } else if (!bufDone) {
       buf[bufLen++] = inChar;
@@ -167,10 +170,39 @@ void loop() {
     }
   }
 
+  while (Serial1.available()) {
+    inChar = (char)Serial1.read();
+
+    if (bufLen2 >= BUF_SIZE - 1) {
+      Serial.println("BUF OVERRUN");
+      bufLen2 = 0;
+      continue;
+    }
+
+    if (!bufDone2 && inChar == '\n') {
+      buf2[bufLen2 + 1] = 0;
+      bufDone2 = true;
+    } else if (!bufDone2) {
+      buf2[bufLen2++] = inChar;
+    }
+
+    if (bufDone2) {
+#if LOGGING
+      Serial.print("buf2: ");
+      Serial.write(buf2, bufLen2);
+      Serial.println();
+#endif
+      handleMessage(buf2, bufLen2);
+
+      bufDone2 = false;
+      bufLen2 = 0;
+    }
+  }
+
 #if HEARTBEAT
   if (now - lastHeartbeatTime >= HEARTBEAT_TIMEOUT_MILLIS) {
     lastHeartbeatTime = now;
-    Serial.println(HEARTBEAT_MSG);
+    Serial1.println(HEARTBEAT_MSG);
   }
 #endif
 
