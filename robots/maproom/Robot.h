@@ -52,13 +52,21 @@ public:
   Robot(): Robot(-1, -1, -1, -1, -1, -1, -1) {}
 
   void setup() {
-    pen.setup();
-    setPen(PEN_UP);
+    motorA.setup();
+    motorB.setup();
+    motorC.setup();
     stop();
+
+    yield();
 
     Serial.println("PRENAVX SET UP");
     navx.setup();
     Serial.println("NAVX SET UP");
+
+    yield();
+
+    pen.setup();
+    setPen(PEN_UP);
   }
 
   void setState(const int newState) {

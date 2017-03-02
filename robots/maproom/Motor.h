@@ -26,13 +26,15 @@ public:
     wheelAngle(inWheelAngle),
     wheelForce(inWheelAngle + 90)
   {
-    pinMode(dir, OUTPUT);
-
     wheelAngleRad = wheelAngle / 180.0 * 3.14159;
     wheelForceRad = wheelForce / 180.0 * 3.14159;
 
     xContrib = cos(wheelForceRad);
     yContrib = sin(wheelForceRad);
+  }
+
+  void setup() {
+    pinMode(dir, OUTPUT);
   }
 
   void commandMotor() {

@@ -1,43 +1,55 @@
 #include <Servo.h>
 #include <MiniPID.h>
+#include <ESP8266WiFi.h>
+#include <WiFiUdp.h>
 
 #include "Constants.h"
 #include "Robot.h"
 
 // Change both of these if the ID of the robot changes
 #define ROBOT_ID 2
-#define HEARTBEAT_MSG "SENRB02HB"
+#define HEARTBEAT_MSG "RB02HB"
 
 // Serial options
-#define HEARTBEAT 1
 #define HEARTBEAT_TIMEOUT_MILLIS 500
-
-// Msg buffer
-#define BUF_SIZE 125
+#define SERIAL_BUF_SIZE 125
 #define BUF_VAL_WIDTH 6
 
-char buf[BUF_SIZE], buf2[BUF_SIZE];
-int bufLen, bufLen2;
-bool bufDone, bufDone2;
+// Wifi options
+#define MAX_PACKET_LENGTH 255
+#define WIFI_WAIT_TIME    1000
 
-Robot robot;
+const char *ssid     = "StLouisMaproom";
+const char *password = "CreativeResearch";
+const unsigned int localUdpPort = 5111;
+
+IPAddress remIP(192, 168, 7, 20);
+const int remPort = 5101;
+
+WiFiUDP udp;
+char incomingPacket[MAX_PACKET_LENGTH];
+
+char inChar;
+char serialBuf[SERIAL_BUF_SIZE];
+int serialBufLen;
+bool serialBufDone;
+
 unsigned long lastHeartbeatTime;
+
+Robot robot(ROBOT_ID, PIN_DIR_A, PIN_PWM_A, PIN_DIR_B, PIN_PWM_B, PIN_DIR_C, PIN_PWM_C);
 
 void setup() {
   Serial.begin(19200);
-  Serial1.begin(19200);
+  Serial.println("MRBOOT");
 
-  robot = Robot(ROBOT_ID, PIN_DIR_A, PIN_PWM_A, PIN_DIR_B, PIN_PWM_B, PIN_DIR_C, PIN_PWM_C);
   robot.setup();
-  Serial.println("ROBOT SET UP");
 
-  bufLen = 0;
-  bufDone = false;
-
+  serialBufLen = 0;
+  serialBufDone = false;
   lastHeartbeatTime = 0;
 
-  Serial.println("Looping...");
-  Serial1.println("MRSTART");
+  WiFi.begin(ssid, password);
+  Serial.println("MRSTART");
 }
 
 inline bool match(const char *haystack, const char *needle, const int len) {
@@ -75,7 +87,15 @@ void handleMessage(char *buf, const int len) {
   // Vals are 3 after that, as the command names are 3char
   char *vals = msg + 3;
 
-  if (match(msg, "MOV", 3)) {
+  if(match(msg, "AT", 2)) {
+    if (WiFi.isConnected()) {
+      Serial.println("ESCONN");
+    } else {
+      Serial.println("ESNC");
+    }
+    Serial.print("ESIP");
+    Serial.println(WiFi.localIP());
+  } else if (match(msg, "MOV", 3)) {
     // MOVE COMMAND
 
     if (len != 23) {
@@ -140,76 +160,83 @@ void handleMessage(char *buf, const int len) {
   }
 }
 
-int wait = 0;
+void ensureWifi() {
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("ESDISCONN");
+    robot.commandStop();
 
-void loop() {
-  char inChar;
-  const unsigned long now = millis();
+    WiFi.reconnect();
+    while (WiFi.status() != WL_CONNECTED)
+    {
+      delay(WIFI_WAIT_TIME);
+      Serial.println("ESWAITCONN");
+    }
 
+    Serial.println("ESCONNECT");
+
+    udp.begin(localUdpPort);
+    Serial.printf("ESUDP:%s:%d\n", WiFi.localIP().toString().c_str(), localUdpPort);
+  }
+}
+
+void handleSerial() {
   while (Serial.available()) {
     inChar = (char)Serial.read();
 
-    if (bufLen >= BUF_SIZE - 1) {
+    if (serialBufLen >= SERIAL_BUF_SIZE - 1) {
       Serial.println("BUF OVERRUN");
-      bufLen = 0;
+      serialBufLen = 0;
       continue;
     }
 
-    if (!bufDone && inChar == '\n') {
-      buf[bufLen+1] = 0;
-      bufDone = true;
-    } else if (!bufDone) {
-      buf[bufLen++] = inChar;
+    if (!serialBufDone && inChar == '\n') {
+      serialBuf[serialBufLen+1] = 0;
+      serialBufDone = true;
+    } else if (!serialBufDone) {
+      serialBuf[serialBufLen++] = inChar;
     }
 
-    if (bufDone) {
-#if LOGGING
-      Serial.print("buf: ");
-      Serial.write(buf, bufLen);
-      Serial.println();
-#endif
-      handleMessage(buf, bufLen);
+    if (serialBufDone) {
+      handleMessage(serialBuf, serialBufLen);
 
-      bufDone = false;
-      bufLen = 0;
+      serialBufDone = false;
+      serialBufLen = 0;
     }
   }
+}
 
-  while (Serial1.available()) {
-    inChar = (char)Serial1.read();
-
-    if (bufLen2 >= BUF_SIZE - 1) {
-      Serial.println("BUF OVERRUN");
-      bufLen2 = 0;
-      continue;
+void handleUdp() {
+  int packetSize = udp.parsePacket();
+  if (packetSize) {
+    int len = udp.read(incomingPacket, MAX_PACKET_LENGTH);
+    if (len > 0) {
+      incomingPacket[len] = 0;
     }
+    handleMessage(incomingPacket, len);
 
-    if (!bufDone2 && inChar == '\n') {
-      buf2[bufLen2 + 1] = 0;
-      bufDone2 = true;
-    } else if (!bufDone2) {
-      buf2[bufLen2++] = inChar;
-    }
-
-    if (bufDone2) {
-#if LOGGING
-      Serial.print("buf2: ");
-      Serial.write(buf2, bufLen2);
-      Serial.println();
-#endif
-      handleMessage(buf2, bufLen2);
-
-      bufDone2 = false;
-      bufLen2 = 0;
-    }
+    // Update remote IP to whoever just pinged us
+    remIP = udp.remoteIP();
   }
+}
 
-#if HEARTBEAT
+void sendHeartbeat() {
+  udp.beginPacket(remIP, remPort);
+  udp.write(HEARTBEAT_MSG);
+  udp.write('\n');
+  udp.endPacket();
+}
+
+void loop() {
+  const unsigned long now = millis();
+
+  ensureWifi();
+  handleSerial();
+  handleUdp();
+
   if (now - lastHeartbeatTime >= HEARTBEAT_TIMEOUT_MILLIS) {
     lastHeartbeatTime = now;
-    Serial1.println(HEARTBEAT_MSG);
+    sendHeartbeat();
   }
-#endif
 
   robot.update();
 }
