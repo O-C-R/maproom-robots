@@ -55,7 +55,10 @@ public:
     pen.setup();
     setPen(PEN_UP);
     stop();
+
+    Serial.println("PRENAVX SET UP");
     navx.setup();
+    Serial.println("NAVX SET UP");
   }
 
   void setState(const int newState) {

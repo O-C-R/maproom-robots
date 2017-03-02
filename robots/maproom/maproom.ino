@@ -24,16 +24,17 @@ Robot robot;
 unsigned long lastHeartbeatTime;
 
 void setup() {
+  Serial.begin(19200);
+  Serial1.begin(19200);
+
   robot = Robot(ROBOT_ID, PIN_DIR_A, PIN_PWM_A, PIN_DIR_B, PIN_PWM_B, PIN_DIR_C, PIN_PWM_C);
   robot.setup();
+  Serial.println("ROBOT SET UP");
 
   bufLen = 0;
   bufDone = false;
 
   lastHeartbeatTime = 0;
-
-  Serial.begin(19200);
-  Serial1.begin(19200);
 
   Serial.println("Looping...");
   Serial1.println("MRSTART");
