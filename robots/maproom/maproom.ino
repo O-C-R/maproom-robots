@@ -11,6 +11,8 @@
 // Serial options
 #define HEARTBEAT 1
 #define HEARTBEAT_TIMEOUT_MILLIS 500
+#define MSG_TIMEOUT_DRAWING_MILLIS 500
+#define MSG_TIMEOUT_MILLIS 1000
 
 // Msg buffer
 #define BUF_SIZE 125
@@ -21,6 +23,7 @@ int bufLen, bufLen2;
 bool bufDone, bufDone2;
 
 Robot robot;
+unsigned long lastMsgRecvTime;
 unsigned long lastHeartbeatTime;
 
 void setup() {
@@ -35,6 +38,7 @@ void setup() {
   bufDone = false;
 
   lastHeartbeatTime = 0;
+  lastMsgRecvTime = 0;
 
   Serial.println("Looping...");
   Serial1.println("MRSTART");
@@ -68,6 +72,8 @@ void handleMessage(char *buf, const int len) {
     // Not a maproom message
     return;
   }
+
+  lastMsgRecvTime = millis();
 
   // Advance 2 char past MR for msg
   char *msg = buf + 2;
@@ -130,7 +136,6 @@ void handleMessage(char *buf, const int len) {
       robot.setPen(PEN_UP);
     }
 
-    robot.stop();
     robot.commandStop();
   } else {
     Serial.print("Unknown message: ");
@@ -210,6 +215,12 @@ void loop() {
     Serial1.println(HEARTBEAT_MSG);
   }
 #endif
+
+  if (robot.state == STATE_DRAWING && now - lastMsgRecvTime >= MSG_TIMEOUT_DRAWING_MILLIS) {
+    robot.commandStop();
+  } else if (now - lastMsgRecvTime >= MSG_TIMEOUT_MILLIS) {
+    robot.commandStop();
+  }
 
   robot.update();
 }

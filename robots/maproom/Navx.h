@@ -91,7 +91,9 @@ public:
   float measured, measuredLH, measuredRH;
   float worldRobotOffset;
 
-  Navx(): worldRobotOffset(0), worldYaw(0) {}
+  unsigned long lastAngleChangeTime;
+
+  Navx(): worldRobotOffset(0), worldYaw(0), lastAngleChangeTime(0) {}
 
   void setup() {
     Serial.println("Clearing I2C bus...");
@@ -113,6 +115,8 @@ public:
   }
 
   float update() {
+    unsigned long now = millis();
+
     int i = 0;
     Wire.beginTransmission(0x32); // NavX is at I2C bus 0x32
     Wire.write(0);
@@ -133,9 +137,18 @@ public:
     measured = measuredRH;
 
     // Compute world yaw in 0, 360
-    worldYaw = fmod(measured - worldRobotOffset + 360.0, 360.0);
+    float newWorldYaw = fmod(measured - worldRobotOffset + 360.0, 360.0);
 
-    return worldYaw;
+    if (abs(worldYaw - newWorldYaw) > 0.001) {
+      lastAngleChangeTime = now;
+    }
+
+    if (now - lastAngleChangeTime > 100) {
+      Serial.println("ERR:NAVXDOWN");
+      lastAngleChangeTime = now;
+    }
+
+    return newWorldYaw;
   }
 
   // World is left handed
