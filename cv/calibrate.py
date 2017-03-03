@@ -86,5 +86,15 @@ try:
 except Exception as err:
   print(err)
 
+while True:
+  ret,frame = cap.read()
+  gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+  undistorted = cv2.undistort(gray, cameraMatrix, distCoeffs)
+
+  cv2.imshow('frame',undistorted)
+  if cv2.waitKey(1) & 0xFF == ord('q'):
+    break
+
 cap.release()
 cv2.destroyAllWindows()
