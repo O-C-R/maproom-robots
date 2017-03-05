@@ -12,7 +12,7 @@
 #define HEARTBEAT 1
 #define HEARTBEAT_TIMEOUT_MILLIS 500
 #define MSG_TIMEOUT_DRAWING_MILLIS 500
-#define MSG_TIMEOUT_MILLIS 1000
+#define MSG_TIMEOUT_MILLIS 2000
 
 // Msg buffer
 #define BUF_SIZE 125
@@ -149,13 +149,12 @@ int wait = 0;
 
 void loop() {
   char inChar;
-  const unsigned long now = millis();
 
   while (Serial.available()) {
     inChar = (char)Serial.read();
 
     if (bufLen >= BUF_SIZE - 1) {
-      Serial.println("BUF OVERRUN");
+      Serial.println("Serial0 BUF OVERRUN");
       bufLen = 0;
       continue;
     }
@@ -184,7 +183,7 @@ void loop() {
     inChar = (char)Serial1.read();
 
     if (bufLen2 >= BUF_SIZE - 1) {
-      Serial.println("BUF OVERRUN");
+      Serial.println("Serial1 BUF OVERRUN");
       bufLen2 = 0;
       continue;
     }
@@ -209,6 +208,8 @@ void loop() {
     }
   }
 
+  const unsigned long now = millis();
+
 #if HEARTBEAT
   if (now - lastHeartbeatTime >= HEARTBEAT_TIMEOUT_MILLIS) {
     lastHeartbeatTime = now;
@@ -217,8 +218,14 @@ void loop() {
 #endif
 
   if (robot.state == STATE_DRAWING && now - lastMsgRecvTime >= MSG_TIMEOUT_DRAWING_MILLIS) {
+    Serial.println("TOO LONG");
+    Serial.println(now);
+    Serial.println(lastMsgRecvTime);
     robot.commandStop();
   } else if (now - lastMsgRecvTime >= MSG_TIMEOUT_MILLIS) {
+    Serial.println("TOO LONG");
+    Serial.println(now);
+    Serial.println(lastMsgRecvTime);
     robot.commandStop();
   }
 

@@ -17,6 +17,7 @@ inline float angleDiff(const float a1, const float a2) {
 
 class Robot
 {
+public:
   int id;
   int state;
 
@@ -34,7 +35,6 @@ class Robot
   Navx navx;
   Pen pen;
 
-public:
   Robot(int id, int dirA, int pwmA, int dirB, int pwmB, int dirC, int pwmC):
     id(id),
     state(STATE_WAITING),
@@ -62,10 +62,12 @@ public:
   }
 
   void setState(const int newState) {
-    Serial.print("State transition from ");
-    Serial.print(state);
-    Serial.print(" to ");
-    Serial.println(newState);
+    if (newState != state) {
+      Serial.print("State transition from ");
+      Serial.print(state);
+      Serial.print(" to ");
+      Serial.println(newState);
+    }
 
     state = newState;
   }
