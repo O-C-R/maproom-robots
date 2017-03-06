@@ -4,16 +4,21 @@
 #define MOTORS_DIR false
 
 // Pins
-#define PIN_PWM_A 16
-#define PIN_DIR_A 2
+#define PIN_PWM_A 4
+#define PIN_DIR_A 5
 
 #define PIN_PWM_B 15
-#define PIN_DIR_B 0
+#define PIN_DIR_B 13
 
 #define PIN_PWM_C 12
-#define PIN_DIR_C 13
+#define PIN_DIR_C 14
 
-#define PIN_PEN 14
+#define PIN_PEN 16
+
+// #define SDA_PIN 16
+// #define SCL_PIN 0
+#define SDA_PIN 0
+#define SCL_PIN 2
 
 // Speeds
 #define ROTATION_ERROR 0.5

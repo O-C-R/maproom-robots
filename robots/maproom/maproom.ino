@@ -8,10 +8,11 @@
 
 // Change both of these if the ID of the robot changes
 #define ROBOT_ID 2
-#define HEARTBEAT_MSG "RB02HB"
 
 // Serial options
 #define HEARTBEAT_TIMEOUT_MILLIS 500
+#define MSG_TIMEOUT_DRAWING_MILLIS 500
+#define MSG_TIMEOUT_MILLIS 2000
 #define SERIAL_BUF_SIZE 125
 #define BUF_VAL_WIDTH 6
 
@@ -28,12 +29,14 @@ const int remPort = 5101;
 
 WiFiUDP udp;
 char incomingPacket[MAX_PACKET_LENGTH];
+char outgoingPacket[MAX_PACKET_LENGTH];
 
 char inChar;
 char serialBuf[SERIAL_BUF_SIZE];
 int serialBufLen;
 bool serialBufDone;
 
+unsigned long lastMsgRecvTime;
 unsigned long lastHeartbeatTime;
 
 Robot robot(ROBOT_ID, PIN_DIR_A, PIN_PWM_A, PIN_DIR_B, PIN_PWM_B, PIN_DIR_C, PIN_PWM_C);
@@ -47,6 +50,7 @@ void setup() {
   serialBufLen = 0;
   serialBufDone = false;
   lastHeartbeatTime = 0;
+  lastMsgRecvTime = 0;
 
   WiFi.begin(ssid, password);
   Serial.println("MRSTART");
@@ -80,6 +84,8 @@ void handleMessage(char *buf, const int len) {
     // Not a maproom message
     return;
   }
+
+  lastMsgRecvTime = millis();
 
   // Advance 2 char past MR for msg
   char *msg = buf + 2;
@@ -150,7 +156,6 @@ void handleMessage(char *buf, const int len) {
       robot.setPen(PEN_UP);
     }
 
-    robot.stop();
     robot.commandStop();
   } else {
     Serial.print("Unknown message: ");
@@ -180,17 +185,19 @@ void ensureWifi() {
 }
 
 void handleSerial() {
+  char inChar;
+
   while (Serial.available()) {
     inChar = (char)Serial.read();
 
     if (serialBufLen >= SERIAL_BUF_SIZE - 1) {
-      Serial.println("BUF OVERRUN");
+      Serial.println("Serial0 BUF OVERRUN");
       serialBufLen = 0;
       continue;
     }
 
     if (!serialBufDone && inChar == '\n') {
-      serialBuf[serialBufLen+1] = 0;
+      serialBuf[serialBufLen+1] = '\0';
       serialBufDone = true;
     } else if (!serialBufDone) {
       serialBuf[serialBufLen++] = inChar;
@@ -210,9 +217,9 @@ void handleUdp() {
   if (packetSize) {
     int len = udp.read(incomingPacket, MAX_PACKET_LENGTH);
     if (len > 0) {
-      incomingPacket[len] = 0;
+      incomingPacket[len] = '\0';
     }
-    handleMessage(incomingPacket, len);
+    handleMessage(incomingPacket, len-1);
 
     // Update remote IP to whoever just pinged us
     remIP = udp.remoteIP();
@@ -221,21 +228,27 @@ void handleUdp() {
 
 void sendHeartbeat() {
   udp.beginPacket(remIP, remPort);
-  udp.write(HEARTBEAT_MSG);
-  udp.write('\n');
+  sprintf(outgoingPacket, "RB%02dHB\n", ROBOT_ID);
+  udp.write(outgoingPacket);
   udp.endPacket();
 }
 
 void loop() {
-  const unsigned long now = millis();
-
   ensureWifi();
   handleSerial();
   handleUdp();
 
+  const unsigned long now = millis();
+
   if (now - lastHeartbeatTime >= HEARTBEAT_TIMEOUT_MILLIS) {
     lastHeartbeatTime = now;
     sendHeartbeat();
+  }
+
+  if (robot.state == STATE_DRAWING && now - lastMsgRecvTime >= MSG_TIMEOUT_DRAWING_MILLIS) {
+    robot.commandStop();
+  } else if (now - lastMsgRecvTime >= MSG_TIMEOUT_MILLIS) {
+    robot.commandStop();
   }
 
   robot.update();
