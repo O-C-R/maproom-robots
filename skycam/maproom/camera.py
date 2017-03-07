@@ -74,13 +74,13 @@ class MaproomCamera:
     self.vs.stop()
 
   def undistort(self, gray=False):
-    if self.frame is None:
-      return None
-
     if gray:
       frame = self.gray
     else:
       frame = self.frame
+
+    if frame is None:
+      return None
 
     if self.mapx is not None and self.mapy is not None:
       frame = cv2.remap(frame, self.mapx, self.mapy, cv2.INTER_LINEAR)

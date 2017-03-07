@@ -1,3 +1,5 @@
+static const int kMinSpeed = 22.0 / 255.0 * PWMRANGE;
+
 class Motor
 {
 
@@ -61,12 +63,12 @@ public:
     const float speed = move + headingCorrection;
 
     direction = speed > 0 ? MOTORS_DIR : !MOTORS_DIR;
-    pulse = map(abs(speed), 0, 600, 22, 255);
+    pulse = map(abs(speed), 0, 1024, kMinSpeed, PWMRANGE);
   }
 
   // runs each motor at constant rate
   void driveConstant(float speed) {
     direction = speed > 0 ? MOTORS_DIR : !MOTORS_DIR;
-    pulse = map(abs(speed), 0, 600, 22, 255);
+    pulse = map(abs(speed), 0, 1024, kMinSpeed, PWMRANGE);
   }
 };

@@ -7,7 +7,7 @@
 #include "Robot.h"
 
 // Change both of these if the ID of the robot changes
-#define ROBOT_ID 1
+#define ROBOT_ID 2
 
 // Serial options
 #define HEARTBEAT_TIMEOUT_MILLIS 500
@@ -157,6 +157,11 @@ void handleMessage(char *buf, const int len) {
     }
 
     robot.commandStop();
+  } else if (match(msg, "SRV", 3)) {
+    int angle = extractInt(vals, 0);
+    Serial.print("Moving servo to angle: ");
+    Serial.println(angle);
+    robot.pen.setServo(angle);
   } else {
     Serial.print("Unknown message: ");
     Serial.println(buf);

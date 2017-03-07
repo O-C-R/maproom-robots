@@ -15,15 +15,8 @@
 
 #define PIN_PEN 16
 
-// #define SDA_PIN 16
-// #define SCL_PIN 0
 #define SDA_PIN 0
 #define SCL_PIN 2
-
-// Speeds
-#define ROTATION_ERROR 0.5
-#define ROTATION_SPEED_MAX 150
-#define ROTATION_SPEED_MIN 85
 
 // Robot states
 #define STATE_WAITING 0
@@ -39,5 +32,10 @@
 // Time for pen to move between states
 #define PEN_MOVING_TIME 200
 
-#define PEN_DOWN_VAL 160
-#define PEN_UP_VAL 90
+// ROBOT 1
+// #define PEN_DOWN_VAL 160
+// #define PEN_UP_VAL 90
+
+// ROBOT 2
+#define PEN_DOWN_VAL 30
+#define PEN_UP_VAL 115

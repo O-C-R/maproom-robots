@@ -12,7 +12,15 @@ public:
     servo.attach(PIN_PEN);
   }
 
+  void setServo(const int val) {
+    servo.write(val);
+  }
+
   void setState(const int newState) {
+    if (state == newState) {
+      return;
+    }
+
     if (newState == PEN_UP) {
       servo.write(PEN_UP_VAL);
     } else if (newState == PEN_DOWN) {

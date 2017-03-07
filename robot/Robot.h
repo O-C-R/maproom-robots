@@ -4,9 +4,9 @@
 #include "Pen.h"
 
 //Specify the links and initial tuning parameters
-#define YAW_PID_KP 12.0
+#define YAW_PID_KP 10.0
 #define YAW_PID_KI 0.3
-#define YAW_PID_KD 10.0
+#define YAW_PID_KD 1.0
 
 inline float angleDiff(const float a1, const float a2) {
   float difference = a1 - a2;
@@ -45,18 +45,13 @@ public:
     motorC(dirC, pwmC, 240.0),
     yawPID(YAW_PID_KP, YAW_PID_KI, YAW_PID_KD)
   {
-    yawPID.setOutputLimits(-200.0, 200.0);
+    yawPID.setOutputLimits(-500.0, 500.0);
     yawPID.setMaxIOutput(50.0);
   }
 
   Robot(): Robot(-1, -1, -1, -1, -1, -1, -1) {}
 
   void setup() {
-    pen.setup();
-    setPen(PEN_UP);
-
-    yield();
-
     motorA.setup();
     motorB.setup();
     motorC.setup();
@@ -65,6 +60,11 @@ public:
     yield();
 
     navx.setup();
+
+    yield();
+
+    pen.setup();
+    setPen(PEN_UP);
   }
 
   void setState(const int newState) {

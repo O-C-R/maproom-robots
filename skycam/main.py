@@ -1,3 +1,5 @@
+import yappi
+
 import time
 import json
 import argparse
@@ -40,6 +42,8 @@ ap.add_argument("--calibrations", type=str, default="./calibrations",
   help="Calibrations path")
 ap.add_argument("--refimage", type=str, required=False,
   help="Reference image")
+ap.add_argument("--profile", type=bool, default=False,
+  help="Do profiling")
 args = vars(ap.parse_args())
 
 cameraID = args['camera']
@@ -50,12 +54,12 @@ resolution = (args['width'], args['height'])
 clients = u.clientsFromIPs(remotes, args['port'])
 
 camera = MaproomCamera(cameraID, resolution)
-camera.load(args["calibrations"], loadCameraMatrix=True, loadPerspective=True, loadHeight=True)
+camera.load(args["calibrations"])
 
 camera2 = None
 if cameraID2 > 0:
   camera2 = MaproomCamera(cameraID2, resolution)
-  camera2.load(args["calibrations"], loadCameraMatrix=True, loadPerspective=True)
+  camera2.load(args["calibrations"], loadHeight=False)
 
 s3uploader = None
 if args['timelapsecam'] >= 0:
@@ -126,7 +130,7 @@ if camera2 is not None:
   camera2.start()
 
 # Wait for cameras to warm up
-time.sleep(1.0)
+time.sleep(2.0)
 
 # Start uploader
 if s3uploader is not None:
@@ -136,6 +140,8 @@ if s3uploader is not None:
 if irfinder is not None:
   irfinder.start()
 
+if args['profile']:
+  yappi.start()
 try:
   # Start main loop
   running = True
@@ -153,6 +159,9 @@ try:
     if p:
       print("fps", f, "with markers", markerIdList)
 finally:
+  if args['profile']:
+    yappi.get_func_stats().sort('tsub').print_all()
+
   # Stop all gracefully
   camera.stop()
   if camera2 is not None:
