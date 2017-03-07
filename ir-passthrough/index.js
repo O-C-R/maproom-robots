@@ -12,7 +12,7 @@ io.on('connection', function(conn) {
 server.listen(8080);
 
 var udpPort = new osc.UDPPort({
-  localAddress: "127.0.0.1",
+  localAddress: "0.0.0.0",
   localPort: 5201
 });
 

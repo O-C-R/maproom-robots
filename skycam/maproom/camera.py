@@ -83,7 +83,7 @@ class MaproomCamera:
       frame = self.frame
 
     if self.mapx is not None and self.mapy is not None:
-      frame = cv2.remap(self.frame, self.mapx, self.mapy, cv2.INTER_LINEAR)
+      frame = cv2.remap(frame, self.mapx, self.mapy, cv2.INTER_LINEAR)
     if self.perspectiveTransform is not None:
       frame = cv2.warpPerspective(frame, self.perspectiveTransform, c.mappedImageResolution)
 

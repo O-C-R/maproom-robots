@@ -42,6 +42,8 @@ mappedImageDst = np.array([[ 100, 100 ],
                            [ 612, 612 ],
                            [ 100, 612 ]])
 mappedImageResolution = (712, 712)
+mappedImageStart = (100,100)
+mappedImageSize = (512, 512)
 mappedImageCenter = (712.0 / 2.0, 712.0 / 2.0)
 outImageMappedHeight = 512
 
