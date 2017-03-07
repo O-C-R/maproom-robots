@@ -1,0 +1,12 @@
+{
+  "name": "ir-passthrough",
+  "version": "0.0.1",
+  "main": "index.js",
+  "author": "Chris Anderson <chris@ocr.nyc>",
+  "license": "Apache 2.0",
+  "dependencies": {
+    "express": "^4.15.2",
+    "osc": "^2.2.0",
+    "socketio": "^1.0.0"
+  }
+}

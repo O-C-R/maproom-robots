@@ -6,13 +6,15 @@ import numpy as np
 import requests
 
 from . import constants as c
+from . import util as u
 
 class IRFinder:
-  def __init__(self, irCam, regCam, host=c.irCameraHost, path=c.irCameraPath):
+  def __init__(self, irCam, regCam, clients=[], host=c.irCameraHost, path=c.irCameraPath):
     self.irCam = irCam
     self.regCam = regCam
     self.host = host
     self.path = path
+    self.clients = clients
 
     self.stopped = False
 
@@ -52,12 +54,6 @@ class IRFinder:
 
     return polygons
 
-  def post(self, polygons):
-    try:
-      requests.post(self.host + self.path, json={'polygons':polygons})
-    except Exception as e:
-      print(e)
-
   def update(self):
     while True:
       if self.stopped:
@@ -68,8 +64,7 @@ class IRFinder:
 
       self.polygons = self.findPolygons(ir, reg)
 
-      if self.host and self.path:
-        self.post(self.polygons)
+      u.sendToClients(self.clients, "/ir", { 'polygons': polygons })
 
   def read(self):
     return self.frame
@@ -78,7 +73,8 @@ class IRFinder:
     self.stopped = True
 
 if __name__ == "__main__":
-  cam = IRFinder(None, None)
+  clients = u.clientsFromIPs(['127.0.0.1'], 5201)
+  cam = IRFinder(None, None, clients=clients)
 
   ir = cv2.imread('/Users/anderson/Desktop/ir.png', cv2.IMREAD_COLOR)
   reg = cv2.imread('/Users/anderson/Desktop/reg.png', cv2.IMREAD_COLOR)
@@ -90,7 +86,7 @@ if __name__ == "__main__":
 
   while True:
     cv2.imshow('frame', ir)
-    cam.post(polygons)
+    u.sendToClients(cam.clients, "/ir", { 'polygons': polygons })
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
       break

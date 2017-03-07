@@ -47,14 +47,7 @@ cameraID2 = args['camera2']
 remotes = args['remotes'].split(',')
 resolution = (args['width'], args['height'])
 
-clients = [udp_client.SimpleUDPClient(remote, args['port']) for remote in remotes]
-def sendToClients(clients, data):
-  oscmsg = json.dumps(data)
-  for client in clients:
-    try:
-      client.send_message("/cv", oscmsg)
-    except:
-      pass
+clients = u.clientsFromIPs(remotes, args['port'])
 
 camera = MaproomCamera(cameraID, resolution)
 camera.load(args["calibrations"], loadCameraMatrix=True, loadPerspective=True, loadHeight=True)
@@ -107,7 +100,7 @@ def detectMarkers(camera, frame):
     data['up'].append(position['up'].tolist())
     data['raw_pos'].append(position['rawPos'].tolist())
     data['raw_up'].append(position['rawUp'].tolist())
-  sendToClients(clients, data)
+  u.sendToClients(clients, "/cv", data)
 
   if args["display"]:
     frame = camera.undistort()

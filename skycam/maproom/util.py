@@ -2,6 +2,7 @@ import numpy as np
 import cv2
 import json
 from os import path
+from pythonosc import udp_client
 
 def loadCalibration(calibrationsPath, cameraID):
   data = loadJSON(calibrationsPath, videoFilename(cameraID, ''))
@@ -90,3 +91,14 @@ def loadReferenceImage(filename, dstPx, resolution, outresolution, points=None):
     return refimageScaledOrig, refimageScaledFinal, pointsScaled
 
   return refimageScaledOrig, refimageScaledFinal
+
+def clientsFromIPs(remotes, port):
+  return [udp_client.SimpleUDPClient(remote, port) for remote in remotes]
+
+def sendToClients(clients, endpoint, data):
+  oscmsg = json.dumps(data)
+  for client in clients:
+    try:
+      client.send_message(endpoint, oscmsg)
+    except Exception as e:
+      pass
