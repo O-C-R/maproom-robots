@@ -21,6 +21,8 @@ ap.add_argument("-y", "--height", type=int, default=c.resolution[1],
   help="Height of image")
 ap.add_argument("--calibrations", type=str, default="./calibrations",
   help="Calibrations path")
+ap.add_argument("-m", "--mouse", type=bool, default=False,
+  help="Enable mouse clicking on top of Aruco")
 ap.add_argument("--refimage", type=str, required=False,
   help="Reference image")
 args = vars(ap.parse_args())
@@ -38,6 +40,21 @@ savedHigh = []
 camera = MaproomCamera(cameraID, resolution)
 camera.load(args["calibrations"], loadCameraMatrix=True, loadPerspective=False, loadHeight=False)
 
+def addPt(pt):
+  if len(savedLow) == len(savedHigh):
+    savedLow.append(pt)
+  else:
+    savedHigh.append(pt)
+  print('Saved corner', len(savedLow), len(savedHigh))
+
+def onmouse(event,x,y,flags,param):
+  if event == cv2.EVENT_LBUTTONDOWN:
+    addPt([x, y])
+
+cv2.namedWindow('frame')
+if args['mouse']:
+  cv2.setMouseCallback('frame', onmouse)
+
 camera.start()
 fps = FPS()
 while True:
@@ -50,10 +67,6 @@ while True:
     markerCornerSet = markerCorners[0]
     markerCornerSet = cv2.undistortPoints(markerCornerSet, camera.cameraMatrix, camera.distCoeffs, P=camera.newCameraMatrix)
     markerCenterPx = (markerCornerSet[0][0] + markerCornerSet[0][1] + markerCornerSet[0][2] + markerCornerSet[0][3]) / 4.0
-
-  if len(savedLow) == 4 and len(savedHigh) == 4 and heightTransform is None:
-    heightTransform = cv2.getPerspectiveTransform(np.array(savedHigh, np.float32), np.array(savedLow, np.float32))
-    camera.setHeight(heightTransform)
 
   if heightTransform is not None:
     transformedHigh = u.transformPixels(savedHigh, heightTransform)
@@ -80,6 +93,11 @@ while True:
   if refimage is not None:
     cv2.addWeighted(refimage, 0.25, frame, 1 - 0.25, 0, frame)
 
+  status = str(len(savedLow)) + " low / " + str(len(savedHigh)) + " high"
+  cv2.putText(frame, status, (20, 20), cv2.FONT_HERSHEY_PLAIN, 1, (255, 255, 255))
+  status = "space: save, g: compute, s: save, c: clear, q: quit"
+  cv2.putText(frame, status, (20, 40), cv2.FONT_HERSHEY_PLAIN, 1, (255, 255, 255))
+
   cv2.imshow('frame', frame)
   key = cv2.waitKey(1)
 
@@ -92,26 +110,21 @@ while True:
     break
 
   if key & 0xFF == ord(' ') and markerCenterPx is not None:
-    if len(savedLow) == len(savedHigh):
-      savedLow.append(markerCenterPx)
-    else:
-      savedHigh.append(markerCenterPx)
-    print('Saved corner', len(savedLow), len(savedHigh))
+    addPt(markerCenterPx)
+
+  if key & 0xFF == ord('g'):
+    heightTransform, _ = cv2.findHomography(np.array(savedHigh, np.float32), np.array(savedLow, np.float32), cv2.LMEDS)
+    camera.setHeight(heightTransform)
 
   if key & 0xFF == ord('c'):
-    perspectiveTransform = None
+    heightTransform = None
     camera.setPerspective(None)
     savedLow = []
     savedHigh = []
 
-  if key & 0xFF == ord('c'):
-    heightTransform = None
-    picked_src = []
-    picked_corners = []
-
   p, f, frameidx = fps.update()
   if p:
-    print("fps", f, "with any height?", heightTransform != None)
+    print("fps", f, "with any height?", heightTransform is not None)
 
 camera.stop()
 cv2.destroyAllWindows()
