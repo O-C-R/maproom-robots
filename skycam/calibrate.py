@@ -1,6 +1,3 @@
-import sys
-sys.path.append('..')
-
 import time
 import json
 import argparse
@@ -22,12 +19,14 @@ ap.add_argument("-x", "--width", type=int, default=c.resolution[0],
   help="Width of image")
 ap.add_argument("-y", "--height", type=int, default=c.resolution[1],
   help="Height of image")
+ap.add_argument("--calibrations", type=str, default="./calibrations",
+  help="Calibrations path")
 args = vars(ap.parse_args())
 
 #Start capturing images for calibration
 resolution = (args['width'], args['height'])
 camera = MaproomCamera(args['camera'], resolution)
-camera.load(loadCameraMatrix=False, loadPerspective=False, loadHeight=False)
+camera.load(args['calibrations'], loadCameraMatrix=False, loadPerspective=False, loadHeight=False)
 
 REQUIRED_COUNT = 25
 
@@ -41,7 +40,7 @@ success = False
 
 camera.start()
 while True:
-  frame, gray = camera.update(gray=True)
+  frame, gray = camera.update()
   markerCorners, markerIds = camera.detectAruco()
 
   if len(markerCorners) > 0 and frameIdx % frameSpacing == 0:
@@ -72,16 +71,11 @@ if success:
     err, cameraMatrix, distCoeffs, rvecs, tvecs = cv2.aruco.calibrateCameraCharuco(allCorners,allIds,c.charucoBoard,c.resolution,None,None)
     print('Calibrated with err', err)
 
-    out = json.dumps({
+    u.saveJSON(args['calibrations'], u.videoFilename(cameraID, ''), {
       'cameraMatrix': cameraMatrix.tolist(),
       'distCoeffs': distCoeffs.tolist(),
       'err': err
     })
-    filename = 'calibrations/video'+str(cameraID)+'.json'
-    print('Saving calibration to file:', filename)
-    with open(filename, 'w') as f:
-      f.write(out)
-
     print('...done!')
   except Exception as err:
     print(err)

@@ -1,6 +1,3 @@
-import sys
-sys.path.append('..')
-
 import time
 import json
 import argparse
@@ -22,7 +19,7 @@ ap.add_argument("-x", "--width", type=int, default=c.resolution[0],
   help="Width of image")
 ap.add_argument("-y", "--height", type=int, default=c.resolution[1],
   help="Height of image")
-ap.add_argument("--calibrations", type=str, default="../calibrations",
+ap.add_argument("--calibrations", type=str, default="./calibrations",
   help="Calibrations path")
 ap.add_argument("--refimage", type=str, required=False,
   help="Reference image")

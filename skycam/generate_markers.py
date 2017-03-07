@@ -1,13 +1,10 @@
-import sys
-sys.path.append('..')
-
 import cv2
 from os import path
 
 import maproom.constants as c
 
 def markerPath(fname):
-  return path.join('..', 'markers', fname)
+  return path.join('markers', fname)
 
 print('wrote image with dims', c.charucoImgDims, 'maps to size', (c.charucoSqSizeM * c.charucoNSqHoriz, c.charucoSqSizeM * c.charucoNSqVert), 'meters')
 print('or', (c.charucoSqSizeM * c.charucoNSqHoriz / c.inToM, c.charucoSqSizeM * c.charucoNSqVert / c.inToM), 'inches')

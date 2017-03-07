@@ -7,7 +7,7 @@
 #include "Robot.h"
 
 // Change both of these if the ID of the robot changes
-#define ROBOT_ID 2
+#define ROBOT_ID 1
 
 // Serial options
 #define HEARTBEAT_TIMEOUT_MILLIS 500

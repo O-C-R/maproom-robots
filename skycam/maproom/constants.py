@@ -48,3 +48,6 @@ outImageMappedHeight = 512
 timelapseCaptureTime = 5.0
 timelapseProfile = 'stlmaproom-uploader'
 timelapseBucket = 'stlmaproom-frames'
+
+irCameraHost = 'http://localhost:4000'
+irCameraPath = '/set-ir-mask-points'

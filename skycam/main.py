@@ -1,6 +1,3 @@
-import sys
-sys.path.append('..')
-
 import time
 import json
 import argparse
@@ -36,7 +33,7 @@ ap.add_argument("-p", "--port", type=int, default=5100,
   help="Host port for OSC messages")
 ap.add_argument("--timelapse", type=bool, default=False,
   help="Enable timelapse upload to S3")
-ap.add_argument("--calibrations", type=str, default="../calibrations",
+ap.add_argument("--calibrations", type=str, default="./calibrations",
   help="Calibrations path")
 ap.add_argument("--refimage", type=str, required=False,
   help="Reference image")

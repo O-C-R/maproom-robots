@@ -1,9 +1,8 @@
 # St Louis Map Room Robots
 
 ### Dependencies
-- Arduino Mega
+- Adafruit Feather Huzzah
 - MiniPID: https://github.com/tekdemo/MiniPID
-- I2C Master Library: https://github.com/DSSCircuits/I2C-Master-Library/
 
 ### Message Protocol
 

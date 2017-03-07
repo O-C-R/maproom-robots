@@ -5,7 +5,6 @@ set -ex
 PI_HOST=192.168.7.52
 
 scp ./*.py pi@$PI_HOST:~/cv/
-scp ./scripts/*.py pi@$PI_HOST:~/cv/scripts/
 scp ./maproom/*.py pi@$PI_HOST:~/cv/maproom/
 scp markers.service pi@$PI_HOST:~/markers.service
 ssh pi@$PI_HOST "set -ex && \
