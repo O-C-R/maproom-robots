@@ -12,6 +12,7 @@ from pythonosc import udp_client
 
 from maproom.camera import MaproomCamera
 from maproom.s3timelapse import S3Timelapse
+from maproom.irfinder import IRFinder
 from maproom.fps import FPS
 import maproom.constants as c
 import maproom.util as u
@@ -31,8 +32,10 @@ ap.add_argument("-r", "--remotes", type=str, default='192.168.7.20,192.168.7.21,
   help="Host IPs for OSC messages, string delimited")
 ap.add_argument("-p", "--port", type=int, default=5100,
   help="Host port for OSC messages")
-ap.add_argument("--timelapse", type=bool, default=False,
-  help="Enable timelapse upload to S3")
+ap.add_argument("--timelapsecam", type=int, default=-1,
+  help="Which camera for timelapse upload to S3, either 0 or 1")
+ap.add_argument("--ir", type=bool, default=False,
+  help="Enable IR post to Maproom")
 ap.add_argument("--calibrations", type=str, default="./calibrations",
   help="Calibrations path")
 ap.add_argument("--refimage", type=str, required=False,
@@ -62,11 +65,23 @@ if cameraID2 > 0:
   camera2.load(args["calibrations"], loadCameraMatrix=True, loadPerspective=True)
 
 s3uploader = None
-if args['timelapse']:
-  if camera2 is not None:
-    s3uploader = S3Timelapse(camera2)
-  else:
+if args['timelapsecam'] >= 0:
+  if args['timelapsecam'] == 0:
     s3uploader = S3Timelapse(camera)
+  elif args['timelapsecam'] == 1:
+    if camera2 is not None:
+      s3uploader = S3Timelapse(camera2)
+    else:
+      print("Could not start timelapse, no second camera enabled")
+  else:
+    print("Invalid timelapse cam option")
+
+irfinder = None
+if args['ir']:
+  if camera2 is not None:
+    irfinder = IRFinder(camera, camera2)
+  else:
+    print('Could not start IR finder, no second camera enabled')
 
 refimageScaledFinal = None
 if args["refimage"]:
@@ -124,6 +139,10 @@ time.sleep(1.0)
 if s3uploader is not None:
   s3uploader.start()
 
+# Start IR finder
+if irfinder is not None:
+  irfinder.start()
+
 try:
   # Start main loop
   running = True
@@ -147,5 +166,7 @@ finally:
     camera2.stop()
   if s3uploader is not None:
     s3uploader.stop()
+  if irfinder is not None:
+    irfinder.stop()
 
   cv2.destroyAllWindows()

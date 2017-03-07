@@ -49,5 +49,5 @@ timelapseCaptureTime = 5.0
 timelapseProfile = 'stlmaproom-uploader'
 timelapseBucket = 'stlmaproom-frames'
 
-irCameraHost = 'http://localhost:4000'
+irCameraHost = 'http://stlmaproom.herokuapp.com'
 irCameraPath = '/set-ir-mask-points'
