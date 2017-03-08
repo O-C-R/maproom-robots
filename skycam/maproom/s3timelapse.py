@@ -13,12 +13,13 @@ class S3Timelapse:
     self.bucket = bucket
     self.interval = interval
     self.timer = None
+    self.running = False
 
     self.session = boto3.Session(profile_name=profileName)
     self.s3 = self.session.client('s3')
 
   def start(self):
-    self.stopped = False
+    self.running = True
 
     self.timer = Timer(self.interval, self.update)
     self.timer.start()
@@ -35,16 +36,19 @@ class S3Timelapse:
       cv2.imwrite(filename, frame)
       self.s3.upload_file(filename, self.bucket, filename)
       print('Uploaded ' + filename)
-
-      if not self.stopped:
-        self.timer = Timer(self.interval, self.update)
-        self.timer.start()
     except Exception as e:
       print(e)
     finally:
       os.remove(filename)
 
+    if self.running:
+      self.timer = Timer(self.interval, self.update)
+      self.timer.start()
+
   def stop(self):
-    self.stopped = True
-    if self.timer != None:
+    self.running = False
+    if self.timer is not None:
       self.timer.cancel()
+
+  def isRunning(self):
+    return self.running

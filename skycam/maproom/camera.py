@@ -62,9 +62,7 @@ class MaproomCamera:
     self.vs.start()
 
   def update(self):
-    self.frame = self.vs.read()
-    self.gray = cv2.cvtColor(self.frame, cv2.COLOR_BGR2GRAY)
-
+    self.frame, self.gray = self.vs.read()
     return self.frame, self.gray
 
   def lastFrame(self):
@@ -90,10 +88,16 @@ class MaproomCamera:
     return frame
 
   def detectAruco(self):
+    if self.gray is None:
+      return [], None
+
     markerCorners, markerIds, rejected = cv2.aruco.detectMarkers(self.gray, c.markerDictionary, parameters=c.detectorParams)
     return markerCorners, markerIds
 
   def transformMarkers(self, markerCorners, markerIds, imgCenter=c.mappedImageCenter, imgScale=c.outImageMappedHeight):
+    if markerCorners is None or markerIds is None:
+      return []
+
     positions = {}
     imgCenterPx = np.divide(np.array(c.mappedImageResolution), 2.0)
 

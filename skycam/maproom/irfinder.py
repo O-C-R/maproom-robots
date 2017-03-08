@@ -15,12 +15,12 @@ class IRFinder:
     self.irCam = irCam
     self.regCam = regCam
     self.clients = u.clientsFromIPs(clientIPs, clientPort)
-    self.stopped = False
+    self.running = False
     self.polygons = None
 
   def start(self):
-    t = Thread(target=self.update, args=())
-    t.daemon = True
+    self.running = True
+    t = Thread(target=self.update, args=(), daemon=True)
     t.start()
     return self
 
@@ -85,7 +85,7 @@ class IRFinder:
   def update(self):
     fps = FPS()
     while True:
-      if self.stopped:
+      if not self.running:
         return
 
       ir = self.irCam.undistort(gray=True)
@@ -106,7 +106,10 @@ class IRFinder:
         print('IR FPS', f)
 
   def stop(self):
-    self.stopped = True
+    self.running = False
+
+  def isRunning(self):
+    return self.running
 
 if __name__ == "__main__":
   cam1 = MaproomCamera(0)

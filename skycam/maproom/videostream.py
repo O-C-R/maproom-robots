@@ -9,6 +9,7 @@ class VideoStream:
     self.stream.set(cv2.CAP_PROP_FRAME_WIDTH,resolution[0])
     self.stream.set(cv2.CAP_PROP_FRAME_HEIGHT,resolution[1])
     (self.grabbed, self.frame) = self.stream.read()
+    self.gray = None
 
     self.stopped = False
 
@@ -24,9 +25,10 @@ class VideoStream:
         return
 
       (self.grabbed, self.frame) = self.stream.read()
+      self.gray = cv2.cvtColor(self.frame, cv2.COLOR_BGR2GRAY)
 
   def read(self):
-    return self.frame
+    return self.frame, self.gray
 
   def stop(self):
     self.stopped = True
