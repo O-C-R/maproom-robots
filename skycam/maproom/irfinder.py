@@ -2,6 +2,7 @@ from threading import Thread
 
 import cv2
 import numpy as np
+import math
 
 from .camera import MaproomCamera
 from .fps import FPS
@@ -20,67 +21,40 @@ class IRFinder:
 
   def start(self):
     self.running = True
+
+    self.irCam.setPreundistort(True)
+    self.regCam.setPreundistort(True)
+    self.irCam.setFrameSync(8.0)
+    self.regCam.setFrameSync(8.0)
+
     t = Thread(target=self.update, args=(), daemon=True)
     t.start()
     return self
 
-  def findPolygons(self, ir, reg, draw=False):
+  def findCircle(self, ir, reg, draw=False):
     # TODO: use constants
     irROI = ir[100:612, 100:612]
     regROI = reg[100:612, 100:612]
 
+    # Quasi-match the two scenes...
     meanIR = cv2.mean(irROI)
     meanReg = cv2.mean(regROI)
     regROI = cv2.multiply(regROI, meanIR[0] / meanReg[0])
-    self.irROI = irROI
-    self.regROI = regROI
 
+    # Blur the difference between IR and normal
     diff = cv2.subtract(irROI, regROI)
-    self.diff = diff
+    diff = cv2.blur(diff, (31,31))
 
-    # TODO: can we resample down instead of blur? Is that faster?
-    diff = cv2.blur(diff, (55,55))
-    self.diff2 = diff
+    minVal, maxVal, minLoc, maxLoc = cv2.minMaxLoc(diff)
 
-    diff = cv2.multiply(diff, 10.0)
-    self.diff3 = diff
-
-    _, diff = cv2.threshold(diff, 50, 255, cv2.THRESH_BINARY)
-
-    self.diff4 = diff
-    _, contours, hierarchy = cv2.findContours(diff, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-
-    contourAreas = []
-    for contour in contours:
-      contourAreas.append(cv2.contourArea(contour))
-    n = min(len(contours), 3)
-    topIndicies = np.argpartition(contourAreas, -n)[-n:]
-
-    if True:
-      polygons = []
-      for idx in topIndicies:
-        contour = contours[idx]
-        contourArea = contourAreas[idx]
-
-        if contourArea < MIN_CONTOUR_AREA:
-          continue
-
-        epsilon = 0.001*cv2.arcLength(contour,True)
-        approx = cv2.approxPolyDP(contour,epsilon,True)
-
-        if draw:
-          drawApprox = approx + np.array([100,100])
-          cv2.drawContours(ir,[drawApprox],0,(0,0,255),2)
-
-        normalized = np.array(approx, np.float32) / np.array(diff.shape, np.float32)
-        out = ' '.join([str(pt[0][0])+","+str(pt[0][1]) for pt in normalized])
-
-        polygons.append(out)
-
-      if len(polygons) > 0:
-        self.polygons = polygons
-
-    return self.polygons
+    if maxVal > 20:
+      if draw:
+        cv2.circle(ir, u.tup(maxLoc + np.array([100,100])), 50, 0, 2)
+      return (np.array(maxLoc, np.float32) / np.array(diff.shape, np.float32)).tolist()
+    else:
+      if draw:
+        cv2.circle(ir, u.tup(maxLoc + np.array([100,100])), 50, 127, 2)
+      return None
 
   def update(self):
     fps = FPS()
@@ -88,18 +62,16 @@ class IRFinder:
       if not self.running:
         return
 
-      ir = self.irCam.undistort(gray=True)
-      reg = self.regCam.undistort(gray=True)
+      ir = self.irCam.grayUndistorted
+      reg = self.regCam.grayUndistorted
 
       if ir is None:
-        print ('Skipping, IR is none')
         continue
       if reg is None:
-        print ('Skipping, reg is none')
         continue
 
-      self.polygons = self.findPolygons(ir, reg)
-      u.sendToClients(self.clients, "/ir", { 'polygons': self.polygons })
+      self.circleCenter = self.findCircle(ir, reg)
+      u.sendToClients(self.clients, "/ir", { 'circleCenter': self.circleCenter })
 
       p, f, frameidx = fps.update()
       if p:
@@ -107,6 +79,11 @@ class IRFinder:
 
   def stop(self):
     self.running = False
+
+    self.irCam.setFrameSync(-1)
+    self.regCam.setFrameSync(-1)
+    self.irCam.setPreundistort(False)
+    self.irCam.setPreundistort(False)
 
   def isRunning(self):
     return self.running
@@ -117,6 +94,11 @@ if __name__ == "__main__":
   cam2 = MaproomCamera(1)
   cam2.load('./calibrations', loadHeight=False)
 
+  cam1.setPreundistort(True)
+  cam2.setPreundistort(True)
+  cam1.setFrameSync(8.0)
+  cam2.setFrameSync(8.0)
+
   irFinder = IRFinder(None, None, clientIPs=['192.168.7.20', '192.168.7.22'])
 
   cam1.start()
@@ -126,19 +108,29 @@ if __name__ == "__main__":
 
   fps = FPS()
   while True:
+    p, f, frameidx = fps.update()
+
     cam1.update()
     cam2.update()
 
-    ir = cam1.undistort(gray=True)
-    reg = cam2.undistort(gray=True)
-    polygons = irFinder.findPolygons(ir, reg, draw=draw)
-    u.sendToClients(irFinder.clients, "/ir", { 'polygons': polygons })
+    ir = cam1.grayUndistorted
+    reg = cam2.grayUndistorted
+
+    if ir is None:
+      continue
+    if reg is None:
+      continue
+
+    circleCenter = irFinder.findCircle(ir, reg, draw=draw)
+    u.sendToClients(irFinder.clients, "/ir", { 'circleCenter': circleCenter })
 
     if draw:
-      cv2.imshow('frame', irFinder.diff)
+      frame = ir
+
+      cv2.putText(frame, str(math.floor(frameidx / 10) % 5), (20, 40), cv2.FONT_HERSHEY_PLAIN, 1, 255)
+      cv2.imshow('frame', frame)
       if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
-    p, f, frameidx = fps.update()
     if p:
       print('FPS', f)

@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 User=pi
-WorkingDirectory=/home/pi/cv/scripts
+WorkingDirectory=/home/pi/cv
 Environment=VIRTUAL_ENV=/home/pi/.virtualenvs/cv
 Environment=PATH=$VIRTUAL_ENV/bin:$PATH
 ExecStart=/bin/sh -c "${VIRTUAL_ENV}/bin/python main.py -c 0 -c2 1 --timelapsecam 1 --ir 1"

@@ -33,6 +33,8 @@ ap.add_argument("-r", "--remotes", type=str, default='192.168.7.20,192.168.7.21,
   help="Host IPs for OSC messages, string delimited")
 ap.add_argument("-p", "--port", type=int, default=5100,
   help="Host port to send OSC messages to")
+ap.add_argument("--port2", type=int, default=5201,
+  help="Host port to send IR camera OSC messages to")
 ap.add_argument("--localhost", type=str, default='0.0.0.0',
   help="Local host to receive OSC messages")
 ap.add_argument("--localport", type=int, default=5300,
@@ -166,7 +168,7 @@ if args['timelapsecam'] >= 0:
 irfinder = None
 if args['ir']:
   if camera2 is not None:
-    irfinder = IRFinder(camera, camera2)
+    irfinder = IRFinder(camera, camera2, clientIPs=remotes, clientPort=args['port2'])
   else:
     print('Could not start IR finder, no second camera enabled')
 
@@ -196,11 +198,11 @@ try:
     if newState >= 0 and newState != state:
       updateState(newState)
 
-    frame, gray = camera.update()
-    frame2, gray2 = None, None
+    frame, gray, grayUndistorted = camera.update()
+    frame2, gray2, grayUndistorted2 = None, None, None
 
     if state == c.STATE_FLASHLIGHT and camera2 is not None:
-      frame2, gray2 = camera2.update()
+      frame2, gray2, grayUndistorted = camera2.update()
 
     markerIdList = None
     if state == c.STATE_TRACKING:

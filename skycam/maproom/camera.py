@@ -23,6 +23,8 @@ class MaproomCamera:
 
     self.frame = None
     self.gray = None
+    self.grayUndistorted = None
+    self.isPreundistored = False
 
   def load(self, calibrationsPath, loadCameraMatrix=True, loadPerspective=True, loadHeight=True):
     if loadCameraMatrix:
@@ -36,6 +38,17 @@ class MaproomCamera:
     if loadHeight:
       heightTransform = u.loadHeight(calibrationsPath, self.id)
       self.setHeight(heightTransform)
+
+  def setFrameSync(self, fps):
+    self.vs.setFrameSync(fps)
+
+  def setPreundistort(self, on=True):
+    self.isPreundistored = on
+
+    if on:
+      self.vs.setDistortion(self.mapx, self.mapy, self.perspectiveTransform)
+    else:
+      self.vs.setDistortion(None, None, None)
 
   def setCameraMatrix(self, cameraMatrix, distCoeffs):
     if cameraMatrix is None or distCoeffs is None:
@@ -64,8 +77,8 @@ class MaproomCamera:
     self.running = True
 
   def update(self):
-    self.frame, self.gray = self.vs.read()
-    return self.frame, self.gray
+    self.frame, self.gray, self.grayUndistorted = self.vs.read()
+    return self.frame, self.gray, self.grayUndistorted
 
   def lastFrame(self):
     return self.frame, self.gray
