@@ -53,6 +53,9 @@ state = c.STATE_TRACKING
 
 def updateState(newState):
   global state
+  global camera2
+  global irfinder
+  global s3uploader
 
   if newState == c.STATE_TRACKING:
     if camera2 is not None and camera2.isRunning():
@@ -65,6 +68,11 @@ def updateState(newState):
     else:
       print("No irfinder to stop")
 
+    if s3uploader is not None and s3uploader.isRunning():
+      s3uploader.stop()
+    else:
+      print("No s3uploader to stop")
+
     print("State is now STATE_TRACKING")
   elif newState == c.STATE_FLASHLIGHT:
     if camera2 is not None and not camera2.isRunning():
@@ -76,6 +84,11 @@ def updateState(newState):
       irfinder.start()
     else:
       print("No irfinder to start")
+
+    if s3uploader is not None and not s3uploader.isRunning():
+      s3uploader.start()
+    else:
+      print("No s3uploader to start")
 
     print("State is now STATE_FLASHLIGHT")
 
@@ -169,10 +182,6 @@ time.sleep(2.0)
 
 # Start OSC listener
 oscReceiver.start()
-
-# Start uploader
-if s3uploader is not None:
-  s3uploader.start()
 
 if args['profile']:
   import yappi
