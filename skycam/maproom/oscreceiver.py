@@ -4,7 +4,7 @@ from pythonosc.osc_server import ThreadingOSCUDPServer
 from pythonosc.dispatcher import Dispatcher
 
 class OSCReceiver:
-  def __init__(self, host='127.0.0.1', port=5300):
+  def __init__(self, host='0.0.0.0', port=5300):
     self.dispatcher = Dispatcher()
     self.dispatcher.map("/state", self.setState)
     self.oscServer = ThreadingOSCUDPServer((host, port), self.dispatcher)
