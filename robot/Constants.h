@@ -33,9 +33,9 @@
 #define PEN_MOVING_TIME 200
 
 // ROBOT 1
-// #define PEN_DOWN_VAL 160
-// #define PEN_UP_VAL 90
+#define PEN_DOWN_VAL 160
+#define PEN_UP_VAL 110
 
 // ROBOT 2
-#define PEN_DOWN_VAL 30
-#define PEN_UP_VAL 115
+// #define PEN_DOWN_VAL 30
+// #define PEN_UP_VAL 115
