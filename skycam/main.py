@@ -55,6 +55,11 @@ def updateState(newState):
   global state
 
   if newState == c.STATE_TRACKING:
+    if camera2 is not None and camera2.isRunning():
+      camera2.stop()
+    else:
+      print("No camera2 to stop")
+
     if irfinder is not None and irfinder.isRunning():
       irfinder.stop()
     else:
@@ -62,6 +67,11 @@ def updateState(newState):
 
     print("State is now STATE_TRACKING")
   elif newState == c.STATE_FLASHLIGHT:
+    if camera2 is not None and not camera2.isRunning():
+      camera2.start()
+    else:
+      print("No camera2 to start")
+
     if irfinder is not None and not irfinder.isRunning():
       irfinder.start()
     else:
@@ -151,10 +161,8 @@ refimageScaledFinal = None
 if args["refimage"]:
   refimageScaledOrig, refimageScaledFinal = u.loadReferenceImage(args["refimage"], c.mappedImageDst, resolution, c.mappedImageResolution)
 
-# Start cameras
+# Start camera 1, camera 2 boots up only when asked for
 camera.start()
-if camera2 is not None:
-  camera2.start()
 
 # Wait for cameras to warm up
 time.sleep(2.0)
@@ -165,10 +173,6 @@ oscReceiver.start()
 # Start uploader
 if s3uploader is not None:
   s3uploader.start()
-
-# Start IR finder
-if irfinder is not None:
-  irfinder.start()
 
 if args['profile']:
   import yappi
@@ -186,7 +190,7 @@ try:
     frame, gray = camera.update()
     frame2, gray2 = None, None
 
-    if camera2 is not None:
+    if state == c.STATE_FLASHLIGHT and camera2 is not None:
       frame2, gray2 = camera2.update()
 
     markerIdList = None

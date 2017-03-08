@@ -10,6 +10,7 @@ class MaproomCamera:
     self.id = id
     self.resolution = resolution
     self.vs = VideoStream(src=id, resolution=resolution)
+    self.running = False
 
     self.cameraMatrix = None
     self.distCoeffs = None
@@ -60,6 +61,7 @@ class MaproomCamera:
 
   def start(self):
     self.vs.start()
+    self.running = True
 
   def update(self):
     self.frame, self.gray = self.vs.read()
@@ -70,6 +72,10 @@ class MaproomCamera:
 
   def stop(self):
     self.vs.stop()
+    self.running = False
+
+  def isRunning(self):
+    return self.running
 
   def undistort(self, gray=False):
     if gray:
