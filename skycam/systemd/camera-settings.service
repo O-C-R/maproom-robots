@@ -1,0 +1,12 @@
+[Unit]
+Description=Set camera settings on boot
+BindsTo=dev-video1.device
+After=dev-video1.device
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c "v4l2-ctl -d 1 -c focus_auto=0"
+ExecStop=/bin/sh -c "v4l2-ctl -d 1 -c focus_absolute=1"
+
+[Install]
+WantedBy=multi-user.target

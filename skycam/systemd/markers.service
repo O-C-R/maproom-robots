@@ -7,7 +7,7 @@ User=pi
 WorkingDirectory=/home/pi/cv
 Environment=VIRTUAL_ENV=/home/pi/.virtualenvs/cv
 Environment=PATH=$VIRTUAL_ENV/bin:$PATH
-ExecStart=/bin/sh -c "${VIRTUAL_ENV}/bin/python main.py -c 0 -c2 1 --timelapsecam 1 --ir 1"
+ExecStart=/bin/sh -c "${VIRTUAL_ENV}/bin/python main.py -c 0 -c2 1 --timelapsecam 1 --ir 1 --fixedfocus 1"
 Restart=always
 
 [Install]

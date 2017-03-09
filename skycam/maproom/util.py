@@ -1,7 +1,10 @@
-import numpy as np
-import cv2
 import json
+import subprocess
 from os import path
+
+import cv2
+import numpy as np
+
 from pythonosc import udp_client
 
 def loadCalibration(calibrationsPath, cameraID):
@@ -102,3 +105,18 @@ def sendToClients(clients, endpoint, data):
       client.send_message(endpoint, oscmsg)
     except Exception as e:
       pass
+
+def setFixedFocus(cameraID, focus):
+  commands = [
+    "v4l2-ctl -d " + str(cameraID) + " -c focus_auto=0",
+    "v4l2-ctl -d " + str(cameraID) + " -c focus_absolute=" + str(focus)
+  ]
+
+  for command in commands:
+    print(command)
+    try:
+      process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
+      output, error = process.communicate()
+      print(output, error)
+    except Exception as e:
+      print(e)

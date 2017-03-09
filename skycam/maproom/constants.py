@@ -47,6 +47,9 @@ mappedImageSize = (512, 512)
 mappedImageCenter = (712.0 / 2.0, 712.0 / 2.0)
 outImageMappedHeight = 512
 
+mappedImageUL = mappedImageStart
+mappedImageBR = (mappedImageStart[0]+mappedImageSize[0], mappedImageStart[1]+mappedImageSize[1])
+
 timelapseCaptureTime = 5.0
 timelapseProfile = 'stlmaproom-uploader'
 timelapseBucket = 'stlmaproom-frames'

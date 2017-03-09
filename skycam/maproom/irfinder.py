@@ -33,11 +33,11 @@ class IRFinder:
 
   def findCircle(self, ir, reg, draw=False):
     # TODO: use constants
-    irROI = ir[100:612, 100:612]
-    regROI = reg[100:612, 100:612]
+    irROI = ir[c.mappedImageUL[0]:c.mappedImageBR[0], c.mappedImageUL[1]:c.mappedImageBR[1]]
+    regROI = reg[c.mappedImageUL[0]:c.mappedImageBR[0], c.mappedImageUL[1]:c.mappedImageBR[1]]
 
     # Quasi-match the two scenes...
-    meanIR = cv2.mean(irROI)
+    meanIR = cv2.mean(ir)
     meanReg = cv2.mean(regROI)
     regROI = cv2.multiply(regROI, meanIR[0] / meanReg[0])
 
@@ -45,15 +45,16 @@ class IRFinder:
     diff = cv2.subtract(irROI, regROI)
     diff = cv2.blur(diff, (31,31))
 
+    # The flashlight is at the brightest point
     minVal, maxVal, minLoc, maxLoc = cv2.minMaxLoc(diff)
 
     if maxVal > 20:
       if draw:
-        cv2.circle(ir, u.tup(maxLoc + np.array([100,100])), 50, 0, 2)
+        cv2.circle(ir, u.tup(maxLoc + np.array(c.mappedImageUL)), 50, 0, 2)
       return (np.array(maxLoc, np.float32) / np.array(diff.shape, np.float32)).tolist()
     else:
       if draw:
-        cv2.circle(ir, u.tup(maxLoc + np.array([100,100])), 50, 127, 2)
+        cv2.circle(ir, u.tup(maxLoc + np.array(c.mappedImageUL)), 50, 127, 2)
       return None
 
   def update(self):

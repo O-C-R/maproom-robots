@@ -43,6 +43,8 @@ ap.add_argument("--timelapsecam", type=int, default=-1,
   help="Which camera for timelapse upload to S3, either 0 or 1")
 ap.add_argument("--ir", type=bool, default=False,
   help="Enable IR post to Maproom")
+ap.add_argument("--fixedfocus", type=bool, default=False,
+  help="Fix the focus of the second camera")
 ap.add_argument("--calibrations", type=str, default="./calibrations",
   help="Calibrations path")
 ap.add_argument("--refimage", type=str, required=False,
@@ -150,6 +152,9 @@ camera.load(args["calibrations"])
 
 camera2 = None
 if cameraID2 > 0:
+  if args['fixedfocus']:
+    u.setFixedFocus(cameraID2, 1)
+
   camera2 = MaproomCamera(cameraID2, resolution)
   camera2.load(args["calibrations"], loadHeight=False)
 
