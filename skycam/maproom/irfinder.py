@@ -48,7 +48,7 @@ class IRFinder:
     # The flashlight is at the brightest point
     minVal, maxVal, minLoc, maxLoc = cv2.minMaxLoc(diff)
 
-    if maxVal > 20:
+    if maxVal > 40:
       if draw:
         cv2.circle(ir, u.tup(maxLoc + np.array(c.mappedImageUL)), 50, 0, 2)
       return (np.array(maxLoc, np.float32) / np.array(diff.shape, np.float32)).tolist()

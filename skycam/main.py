@@ -102,6 +102,7 @@ def detectMarkers(camera, frame):
   global args
   global running
   global refimageScaledFinal
+  global clients
 
   markerCorners, markerIds = camera.detectAruco()
 
@@ -215,6 +216,7 @@ try:
 
     p, f, frameidx = fps.update()
     if p:
+      u.sendToClients(clients, "/state", { 'state': state })
       print("fps", f, "in state", state, "with markers", markerIdList)
 finally:
   if args['profile']:
