@@ -6,7 +6,7 @@
 //Specify the links and initial tuning parameters
 #define YAW_PID_KP 10.0
 #define YAW_PID_KI 0.3
-#define YAW_PID_KD 1.0
+#define YAW_PID_KD 0.0
 
 inline float angleDiff(const float a1, const float a2) {
   float difference = a1 - a2;
