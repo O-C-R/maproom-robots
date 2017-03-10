@@ -174,7 +174,7 @@ if args['timelapsecam'] >= 0:
 irfinder = None
 if args['ir']:
   if camera2 is not None:
-    irfinder = IRFinder(camera, camera2, clientIPs=remotes, clientPort=args['port2'])
+    irfinder = IRFinder(camera, clientIPs=remotes, clientPort=args['port2'])
   else:
     print('Could not start IR finder, no second camera enabled')
 

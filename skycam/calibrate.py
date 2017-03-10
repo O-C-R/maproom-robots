@@ -40,7 +40,7 @@ success = False
 
 camera.start()
 while True:
-  frame, gray = camera.update()
+  frame, gray, _ = camera.update()
   markerCorners, markerIds = camera.detectAruco()
 
   if len(markerCorners) > 0 and frameIdx % frameSpacing == 0:
