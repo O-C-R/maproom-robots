@@ -8,6 +8,7 @@
 
 // Change both of these if the ID of the robot changes
 #define ROBOT_ID 1
+// #define ROBOT_ID 2
 
 // Serial options
 #define HEARTBEAT_TIMEOUT_MILLIS 500
@@ -52,6 +53,7 @@ void setup() {
   lastHeartbeatTime = 0;
   lastMsgRecvTime = 0;
 
+  WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
   Serial.println("MRSTART");
 }
